@@ -55,7 +55,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.expensetracker.domain.model.Transaction
 import com.example.expensetracker.domain.model.TransactionType
-import java.text.NumberFormat
+import com.example.expensetracker.presentation.util.CurrencyFormatter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -68,7 +68,6 @@ private val CardRed = Color(0xFFD32F2F)
 private val CardRedDark = Color(0xFFB71C1C)
 private val GreenPrimary = Color(0xFF1D9E75)
 
-private val currencyFormat: NumberFormat = NumberFormat.getCurrencyInstance(Locale.US)
 private val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US)
 
 @Composable
@@ -364,7 +363,7 @@ private fun BalanceCard(
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = currencyFormat.format(balance),
+                    text = CurrencyFormatter.format(balance),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -408,7 +407,7 @@ private fun BalanceCard(
                                     color = Color.White.copy(alpha = 0.7f)
                                 )
                                 Text(
-                                    text = currencyFormat.format(income),
+                                    text = CurrencyFormatter.format(income),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color.White
@@ -450,7 +449,7 @@ private fun BalanceCard(
                                     color = Color.White.copy(alpha = 0.7f)
                                 )
                                 Text(
-                                    text = currencyFormat.format(expense),
+                                    text = CurrencyFormatter.format(expense),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color.White
@@ -525,7 +524,7 @@ fun TransactionItem(
                 }
             }
             Text(
-                text = "${if (transaction.type == TransactionType.INCOME) "+" else "-"} ${currencyFormat.format(transaction.amount)}",
+                text = "${if (transaction.type == TransactionType.INCOME) "+" else "-"} ${CurrencyFormatter.format(transaction.amount)}",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = if (transaction.type == TransactionType.INCOME) IncomeGreen else ExpenseRed

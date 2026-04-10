@@ -1,5 +1,6 @@
 package com.example.expensetracker.presentation.navigation
 
+import com.example.expensetracker.presentation.settings.SettingsScreen
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
@@ -257,16 +258,7 @@ fun ExpenseNavHost(navController: NavHostController) {
                 }
 
                 composable(Screen.Settings.route) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Settings - Coming Soon",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    SettingsScreen()
                 }
             }
         }

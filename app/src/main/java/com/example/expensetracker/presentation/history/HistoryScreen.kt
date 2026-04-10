@@ -36,7 +36,7 @@ import com.example.expensetracker.domain.model.Category
 import com.example.expensetracker.domain.model.Transaction
 import com.example.expensetracker.domain.model.TransactionType
 import com.example.expensetracker.presentation.home.TransactionItem
-import java.text.NumberFormat
+import com.example.expensetracker.presentation.util.CurrencyFormatter
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -47,7 +47,6 @@ private val IncomeGreen = Color(0xFF43A047)
 private val ExpenseRed = Color(0xFFE53935)
 
 private val monthYearFormat = SimpleDateFormat("MMMM yyyy", Locale.US)
-private val currencyFormat: NumberFormat = NumberFormat.getCurrencyInstance(Locale.US)
 
 private data class MonthGroup(
     val label: String,
@@ -199,7 +198,7 @@ fun HistoryScreen(
                             ) {
                                 if (monthGroup.totalIncome > 0) {
                                     Text(
-                                        text = "+ ${currencyFormat.format(monthGroup.totalIncome)}",
+                                        text = "+ ${CurrencyFormatter.format(monthGroup.totalIncome)}",
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Medium,
                                         color = IncomeGreen
@@ -207,7 +206,7 @@ fun HistoryScreen(
                                 }
                                 if (monthGroup.totalExpense > 0) {
                                     Text(
-                                        text = "- ${currencyFormat.format(monthGroup.totalExpense)}",
+                                        text = "- ${CurrencyFormatter.format(monthGroup.totalExpense)}",
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Medium,
                                         color = ExpenseRed

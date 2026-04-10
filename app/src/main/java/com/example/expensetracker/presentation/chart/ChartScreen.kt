@@ -50,20 +50,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.expensetracker.domain.model.Category
 import com.example.expensetracker.presentation.home.PeriodNavigator
 import com.example.expensetracker.presentation.home.TimePeriod
-import java.text.NumberFormat
+import com.example.expensetracker.presentation.util.CurrencyFormatter
 import java.util.Locale
 
 private val GreenPrimary = Color(0xFF1D9E75)
 private val ExpenseRed = Color(0xFFE24B4A)
-private val currencyFormat: NumberFormat = NumberFormat.getCurrencyInstance(Locale.US)
 
-private fun formatCompact(amount: Double): String {
-    return when {
-        amount >= 1_000_000 -> String.format(Locale.US, "$%.1fM", amount / 1_000_000)
-        amount >= 10_000 -> String.format(Locale.US, "$%.1fK", amount / 1_000)
-        else -> currencyFormat.format(amount)
-    }
-}
 
 @Composable
 fun ChartScreen(
@@ -213,7 +205,7 @@ fun ChartScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = currencyFormat.format(state.totalExpenses),
+                                text = CurrencyFormatter.format(state.totalExpenses),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = ExpenseRed
@@ -277,7 +269,7 @@ private fun DonutWithLegend(
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = formatCompact(totalExpenses),
+                    text = CurrencyFormatter.formatCompact(totalExpenses),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
@@ -364,7 +356,7 @@ private fun BarChartRow(
             ) {
                 if (progress > 0.2f) {
                     Text(
-                        text = formatCompact(amount),
+                        text = CurrencyFormatter.formatCompact(amount),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -376,7 +368,7 @@ private fun BarChartRow(
             // Show value outside bar if bar is too small
             if (progress <= 0.2f) {
                 Text(
-                    text = formatCompact(amount),
+                    text = CurrencyFormatter.formatCompact(amount),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = category.color,
