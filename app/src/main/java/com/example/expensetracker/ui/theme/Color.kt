@@ -26,6 +26,12 @@ val ExpenseRed = Color(0xFFE53935)
 val IncomeGreenContainer = Color(0xFFD9F2DA)
 val ExpenseRedContainer = Color(0xFFFDD9D8)
 
+// Card gradient colors
+val CardGreen = Color(0xFF1D9E75)
+val CardGreenDark = Color(0xFF156B50)
+val CardRed = Color(0xFFD32F2F)
+val CardRedDark = Color(0xFFB71C1C)
+
 // Neutral
 val NeutralDark = Color(0xFF1A1C1E)
 val NeutralMedium = Color(0xFF44474E)

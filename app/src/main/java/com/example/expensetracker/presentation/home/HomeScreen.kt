@@ -51,24 +51,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.expensetracker.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.expensetracker.domain.model.Transaction
 import com.example.expensetracker.domain.model.TransactionType
 import com.example.expensetracker.presentation.util.CurrencyFormatter
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.example.expensetracker.ui.theme.CardGreen
+import com.example.expensetracker.ui.theme.CardGreenDark
+import com.example.expensetracker.ui.theme.CardRed
+import com.example.expensetracker.ui.theme.CardRedDark
+import com.example.expensetracker.ui.theme.ExpenseRed
+import com.example.expensetracker.ui.theme.IncomeGreen
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
-private val IncomeGreen = Color(0xFF43A047)
-private val ExpenseRed = Color(0xFFE53935)
-private val CardGreen = Color(0xFF1D9E75)
-private val CardGreenDark = Color(0xFF156B50)
-private val CardRed = Color(0xFFD32F2F)
-private val CardRedDark = Color(0xFFB71C1C)
-private val GreenPrimary = Color(0xFF1D9E75)
 
-private val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US)
 
 @Composable
 fun HomeScreen(
@@ -79,6 +79,7 @@ fun HomeScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val isNegative = state.balance < 0
     var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
+    var pendingDeleteTransaction by remember { mutableStateOf<Transaction?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.refresh()
@@ -95,7 +96,7 @@ fun HomeScreen(
                 )
             },
             text = {
-                Text("What would you like to do with this transaction?")
+                Text(stringResource(R.string.home_dialog_action_prompt))
             },
             confirmButton = {
                 TextButton(
@@ -104,17 +105,41 @@ fun HomeScreen(
                         onEditTransaction(transaction.id)
                     }
                 ) {
-                    Text("Edit", color = GreenPrimary, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.home_dialog_edit), color = CardGreen, fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = {
-                        viewModel.onDeleteTransaction(transaction.id)
+                        pendingDeleteTransaction = transaction
                         selectedTransaction = null
                     }
                 ) {
-                    Text("Delete", color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.home_dialog_delete), color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        )
+    }
+
+    // Delete confirmation dialog
+    pendingDeleteTransaction?.let { transaction ->
+        AlertDialog(
+            onDismissRequest = { pendingDeleteTransaction = null },
+            title = { Text(stringResource(R.string.home_dialog_delete_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.home_dialog_delete_confirmation)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.onDeleteTransaction(transaction.id)
+                        pendingDeleteTransaction = null
+                    }
+                ) {
+                    Text(stringResource(R.string.home_dialog_confirm), color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeleteTransaction = null }) {
+                    Text(stringResource(R.string.home_dialog_cancel), fontWeight = FontWeight.SemiBold)
                 }
             }
         )
@@ -139,7 +164,7 @@ fun HomeScreen(
             // Header
             item {
                 Text(
-                    text = "ExpenseTracker",
+                    text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -150,7 +175,8 @@ fun HomeScreen(
                 BalanceCard(
                     balance = state.balance,
                     income = state.totalIncome,
-                    expense = state.totalExpense
+                    expense = state.totalExpense,
+                    isNegative = isNegative
                 )
             }
 
@@ -166,7 +192,7 @@ fun HomeScreen(
                             onClick = { viewModel.onPeriodChanged(period) },
                             label = { Text(period.label) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = GreenPrimary,
+                                selectedContainerColor = CardGreen,
                                 selectedLabelColor = Color.White
                             )
                         )
@@ -178,7 +204,7 @@ fun HomeScreen(
             item {
                 PeriodNavigator(
                     label = state.periodLabel,
-                    canGoNext = state.periodOffset < 0,
+                    canGoNext = state.canGoNext,
                     onPrevious = { viewModel.onPreviousPeriod() },
                     onNext = { viewModel.onNextPeriod() }
                 )
@@ -208,7 +234,7 @@ fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Your expenses exceed your income. Consider reviewing your spending.",
+                                text = stringResource(R.string.home_negative_balance_warning),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = ExpenseRed
                             )
@@ -225,12 +251,12 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Recent Transactions",
+                        text = stringResource(R.string.home_recent_transactions),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "See all",
+                        text = stringResource(R.string.home_see_all),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable { onNavigateToHistory() }
@@ -248,7 +274,7 @@ fun HomeScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No transactions for this period.\nTap + to add one!",
+                            text = stringResource(R.string.home_empty_transactions),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -283,8 +309,8 @@ fun PeriodNavigator(
         IconButton(onClick = onPrevious) {
             Icon(
                 Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = "Previous period",
-                tint = GreenPrimary
+                contentDescription = stringResource(R.string.home_previous_period),
+                tint = CardGreen
             )
         }
         Text(
@@ -299,8 +325,8 @@ fun PeriodNavigator(
         ) {
             Icon(
                 Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Next period",
-                tint = if (canGoNext) GreenPrimary else Color.Gray.copy(alpha = 0.3f)
+                contentDescription = stringResource(R.string.home_next_period),
+                tint = if (canGoNext) CardGreen else Color.Gray.copy(alpha = 0.3f)
             )
         }
     }
@@ -310,9 +336,9 @@ fun PeriodNavigator(
 private fun BalanceCard(
     balance: Double,
     income: Double,
-    expense: Double
+    expense: Double,
+    isNegative: Boolean
 ) {
-    val isNegative = balance < 0
 
     val gradientStart by animateColorAsState(
         targetValue = if (isNegative) CardRed else CardGreen,
@@ -350,7 +376,7 @@ private fun BalanceCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Total Balance",
+                        text = stringResource(R.string.home_total_balance),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.8f)
                     )
@@ -402,7 +428,7 @@ private fun BalanceCard(
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
                                 Text(
-                                    text = "Income",
+                                    text = stringResource(R.string.home_income),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = Color.White.copy(alpha = 0.7f)
                                 )
@@ -444,7 +470,7 @@ private fun BalanceCard(
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
                                 Text(
-                                    text = "Expenses",
+                                    text = stringResource(R.string.home_expenses),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = Color.White.copy(alpha = 0.7f)
                                 )
@@ -468,6 +494,7 @@ fun TransactionItem(
     transaction: Transaction,
     onClick: (() -> Unit)? = null
 ) {
+    val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy") }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -517,7 +544,7 @@ fun TransactionItem(
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = "${transaction.category.displayName} • ${dateFormat.format(Date(transaction.date))}",
+                        text = "${transaction.category.displayName} • ${Instant.ofEpochMilli(transaction.date).atZone(ZoneId.systemDefault()).toLocalDate().format(formatter)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

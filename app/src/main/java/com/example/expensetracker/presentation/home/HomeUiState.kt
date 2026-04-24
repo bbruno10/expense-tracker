@@ -16,5 +16,6 @@ data class HomeUiState(
     val selectedPeriod: TimePeriod = TimePeriod.MONTHLY,
     val periodOffset: Int = 0, // 0 = current, -1 = previous, etc.
     val periodLabel: String = "",
+    val canGoNext: Boolean = false,
     val isLoading: Boolean = true
 )

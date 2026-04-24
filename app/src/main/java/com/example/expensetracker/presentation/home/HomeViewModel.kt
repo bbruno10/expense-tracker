@@ -85,6 +85,7 @@ class HomeViewModel @Inject constructor(
                     selectedPeriod = period,
                     periodOffset = offset,
                     periodLabel = label,
+                    canGoNext = offset < 0,
                     isLoading = false
                 )
             }

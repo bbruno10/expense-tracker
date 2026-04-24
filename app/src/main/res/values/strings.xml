@@ -1,3 +1,25 @@
 <resources>
     <string name="app_name">ExpenseTracker</string>
+
+    <!-- Home screen -->
+    <string name="home_total_balance">Total Balance</string>
+    <string name="home_income">Income</string>
+    <string name="home_expenses">Expenses</string>
+    <string name="home_negative_balance_warning">Your expenses exceed your income. Consider reviewing your spending.</string>
+    <string name="home_recent_transactions">Recent Transactions</string>
+    <string name="home_see_all">See all</string>
+    <string name="home_empty_transactions">No transactions for this period.\nTap + to add one!</string>
+    <string name="home_previous_period">Previous period</string>
+    <string name="home_next_period">Next period</string>
+
+    <!-- Transaction action dialog -->
+    <string name="home_dialog_action_prompt">What would you like to do with this transaction?</string>
+    <string name="home_dialog_edit">Edit</string>
+    <string name="home_dialog_delete">Delete</string>
+
+    <!-- Delete confirmation dialog -->
+    <string name="home_dialog_delete_title">Delete Transaction</string>
+    <string name="home_dialog_delete_confirmation">Are you sure you want to delete this transaction?</string>
+    <string name="home_dialog_confirm">Confirm</string>
+    <string name="home_dialog_cancel">Cancel</string>
 </resources>
