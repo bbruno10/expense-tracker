@@ -245,6 +245,9 @@ fun ExpenseNavHost(navController: NavHostController) {
                     HistoryScreen(
                         onNavigateBack = {
                             navController.popBackStack()
+                        },
+                        onEditTransaction = { transactionId ->
+                            navController.navigate(Screen.EditTransaction.createRoute(transactionId))
                         }
                     )
                 }

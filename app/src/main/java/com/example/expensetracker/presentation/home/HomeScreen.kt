@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -78,11 +79,20 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val isNegative = state.balance < 0
+    var detailTransaction by remember { mutableStateOf<Transaction?>(null) }
     var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
     var pendingDeleteTransaction by remember { mutableStateOf<Transaction?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.refresh()
+    }
+
+    // Detail Dialog
+    detailTransaction?.let { transaction ->
+        TransactionDetailDialog(
+            transaction = transaction,
+            onDismiss = { detailTransaction = null }
+        )
     }
 
     // Edit/Delete Dialog
@@ -284,7 +294,8 @@ fun HomeScreen(
                 items(state.recentTransactions, key = { it.id }) { transaction ->
                     TransactionItem(
                         transaction = transaction,
-                        onClick = { selectedTransaction = transaction }
+                        onClick = { detailTransaction = transaction },
+                        onLongClick = { selectedTransaction = transaction }
                     )
                 }
             }
@@ -492,14 +503,20 @@ private fun BalanceCard(
 @Composable
 fun TransactionItem(
     transaction: Transaction,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null
 ) {
     val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy") }
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .then(
-                if (onClick != null) Modifier.clickable { onClick() } else Modifier
+                if (onClick != null || onLongClick != null)
+                    Modifier.combinedClickable(
+                        onClick = { onClick?.invoke() },
+                        onLongClick = onLongClick
+                    )
+                else Modifier
             ),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -557,5 +574,68 @@ fun TransactionItem(
                 color = if (transaction.type == TransactionType.INCOME) IncomeGreen else ExpenseRed
             )
         }
+    }
+}
+
+@Composable
+fun TransactionDetailDialog(
+    transaction: Transaction,
+    onDismiss: () -> Unit
+) {
+    val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy") }
+    val dateStr = Instant.ofEpochMilli(transaction.date)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+        .format(formatter)
+    val isIncome = transaction.type == TransactionType.INCOME
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(transaction.category.icon, style = MaterialTheme.typography.titleLarge)
+                Text(transaction.description, fontWeight = FontWeight.Bold)
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "${if (isIncome) "+" else "-"} ${CurrencyFormatter.format(transaction.amount)}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isIncome) IncomeGreen else ExpenseRed
+                )
+                DetailRow(label = "Category", value = "${transaction.category.icon} ${transaction.category.displayName}")
+                DetailRow(label = "Date", value = dateStr)
+                DetailRow(label = "Type", value = if (isIncome) "Income" else "Expense")
+                if (transaction.note.isNotBlank()) {
+                    DetailRow(label = "Notes", value = transaction.note)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@Composable
+private fun DetailRow(label: String, value: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium
+        )
     }
 }

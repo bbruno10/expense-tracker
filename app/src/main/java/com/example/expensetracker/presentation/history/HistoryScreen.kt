@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -20,10 +21,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,8 +39,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.expensetracker.domain.model.Category
 import com.example.expensetracker.domain.model.Transaction
 import com.example.expensetracker.domain.model.TransactionType
+import com.example.expensetracker.presentation.home.TransactionDetailDialog
 import com.example.expensetracker.presentation.home.TransactionItem
 import com.example.expensetracker.presentation.util.CurrencyFormatter
+import com.example.expensetracker.ui.theme.CardGreen
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -59,9 +65,74 @@ private data class MonthGroup(
 @Composable
 fun HistoryScreen(
     onNavigateBack: () -> Unit,
+    onEditTransaction: (Long) -> Unit = {},
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var detailTransaction by remember { mutableStateOf<Transaction?>(null) }
+    var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
+    var pendingDeleteTransaction by remember { mutableStateOf<Transaction?>(null) }
+
+    // Detail Dialog
+    detailTransaction?.let { transaction ->
+        TransactionDetailDialog(
+            transaction = transaction,
+            onDismiss = { detailTransaction = null }
+        )
+    }
+
+    // Edit/Delete Dialog
+    selectedTransaction?.let { transaction ->
+        AlertDialog(
+            onDismissRequest = { selectedTransaction = null },
+            title = { Text(transaction.description, fontWeight = FontWeight.Bold) },
+            text = { Text("What would you like to do with this transaction?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        selectedTransaction = null
+                        onEditTransaction(transaction.id)
+                    }
+                ) {
+                    Text("Edit", color = CardGreen, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        pendingDeleteTransaction = transaction
+                        selectedTransaction = null
+                    }
+                ) {
+                    Text("Delete", color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        )
+    }
+
+    // Delete confirmation dialog
+    pendingDeleteTransaction?.let { transaction ->
+        AlertDialog(
+            onDismissRequest = { pendingDeleteTransaction = null },
+            title = { Text("Delete Transaction", fontWeight = FontWeight.Bold) },
+            text = { Text("Are you sure you want to delete this transaction?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.onEvent(HistoryEvent.DeleteTransaction(transaction.id))
+                        pendingDeleteTransaction = null
+                    }
+                ) {
+                    Text("Confirm", color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeleteTransaction = null }) {
+                    Text("Cancel", fontWeight = FontWeight.SemiBold)
+                }
+            }
+        )
+    }
 
     // Group transactions by month
     val monthGroups = remember(state.transactions) {
@@ -251,7 +322,11 @@ fun HistoryScreen(
                             },
                             enableDismissFromStartToEnd = false
                         ) {
-                            TransactionItem(transaction = transaction)
+                            TransactionItem(
+                                transaction = transaction,
+                                onClick = { detailTransaction = transaction },
+                                onLongClick = { selectedTransaction = transaction }
+                            )
                         }
                     }
                 }
