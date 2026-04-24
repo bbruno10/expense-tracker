@@ -27,6 +27,8 @@ A modern Android expense tracking app built with **Kotlin**, **Jetpack Compose**
 
 - **Dashboard** — Overview of balance, income, and expenses with animated gradient cards that change color when balance is negative
 - **Add/Edit Transactions** — Categorize with emoji icons, set dates with Material3 DatePicker, and add optional notes
+- **Transaction Detail** — Tap any transaction to view a detail dialog showing description, amount, category, date, and notes
+- **Gesture Actions** — Long press any transaction to open edit or delete options, with a confirmation step before deleting
 - **History** — View all transactions grouped by month with category filters and swipe-to-delete
 - **Charts** — Donut chart for expense distribution and bar chart breakdown by category
 - **Period Navigation** — Filter data by week, month, or year with intuitive navigation arrows
@@ -137,11 +139,14 @@ git clone https://github.com/bbruno10/expense-tracker.git
 - [x] Period filtering (Weekly/Monthly/Yearly)
 - [x] Donut & bar chart analytics
 - [x] Transaction history with swipe-to-delete
+- [x] Transaction detail dialog on tap (description, amount, category, date, notes)
+- [x] Long press gesture for edit/delete with confirmation
 - [x] Multi-currency support (6 currencies)
 - [x] Light/Dark/System theme
 - [x] CSV data export
 - [x] Unit tests (79 tests)
 - [x] CI/CD with GitHub Actions
+- [x] Code quality improvements (thread-safe date formatting, string resources, ViewModel encapsulation, duplicate removal)
 - [ ] Custom categories
 - [ ] Recurring transactions
 - [ ] Budget goals per category
