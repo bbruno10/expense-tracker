@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.expensetracker"
+    namespace = "com.brunobrandao.expensetracker"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -14,7 +14,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.expensetracker"
+        applicationId = "com.brunobrandao.expensetracker"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
