@@ -39,8 +39,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.brunobrandao.expensetracker.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brunobrandao.expensetracker.data.preferences.Currency
@@ -55,9 +57,10 @@ fun SettingsScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val exportSuccessMessage = stringResource(R.string.settings_export_success)
     LaunchedEffect(state.showExportSuccess) {
         if (state.showExportSuccess) {
-            snackbarHostState.showSnackbar("Data exported to Downloads folder!")
+            snackbarHostState.showSnackbar(exportSuccessMessage)
             viewModel.onEvent(SettingsEvent.DismissExportSuccess)
         }
     }
@@ -65,7 +68,7 @@ fun SettingsScreen(
     // Currency Dialog
     if (state.showCurrencyDialog) {
         SelectionDialog(
-            title = "Select Currency",
+            title = stringResource(R.string.settings_select_currency),
             options = Currency.entries.map { "${it.symbol}  ${it.displayName}" },
             selectedIndex = Currency.entries.indexOf(state.currency),
             onSelect = { index ->
@@ -78,7 +81,7 @@ fun SettingsScreen(
     // Theme Dialog
     if (state.showThemeDialog) {
         SelectionDialog(
-            title = "Select Theme",
+            title = stringResource(R.string.settings_select_theme),
             options = ThemeMode.entries.map { it.displayName },
             selectedIndex = ThemeMode.entries.indexOf(state.themeMode),
             onSelect = { index ->
@@ -94,23 +97,23 @@ fun SettingsScreen(
             onDismissRequest = { viewModel.onEvent(SettingsEvent.ToggleAboutDialog) },
             title = {
                 Text(
-                    text = "About ExpenseTracker",
+                    text = stringResource(R.string.settings_about_title),
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AboutRow(label = "Version", value = state.appVersion)
-                    AboutRow(label = "Developer", value = "Bruno Brandão")
-                    AboutRow(label = "Architecture", value = "Clean Architecture + MVVM")
-                    AboutRow(label = "Tech Stack", value = "Kotlin, Jetpack Compose, Hilt, Room")
+                    AboutRow(label = stringResource(R.string.settings_about_version), value = state.appVersion)
+                    AboutRow(label = stringResource(R.string.settings_about_developer), value = stringResource(R.string.settings_about_developer_name))
+                    AboutRow(label = stringResource(R.string.settings_about_architecture), value = stringResource(R.string.settings_about_architecture_value))
+                    AboutRow(label = stringResource(R.string.settings_about_tech), value = stringResource(R.string.settings_about_tech_value))
                 }
             },
             confirmButton = {
                 TextButton(
                     onClick = { viewModel.onEvent(SettingsEvent.ToggleAboutDialog) }
                 ) {
-                    Text("Close", color = GreenPrimary)
+                    Text(stringResource(R.string.settings_close), color = GreenPrimary)
                 }
             }
         )
@@ -123,26 +126,26 @@ fun SettingsScreen(
     ) {
         // Title
         Text(
-            text = "Settings",
+            text = stringResource(R.string.settings_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
         )
 
         // Preferences Section
-        SectionHeader(title = "Preferences")
+        SectionHeader(title = stringResource(R.string.settings_section_preferences))
 
         SettingsCard {
             SettingsItem(
                 icon = Icons.Default.AttachMoney,
-                title = "Currency",
+                title = stringResource(R.string.settings_currency),
                 subtitle = "${state.currency.symbol}  ${state.currency.displayName}",
                 onClick = { viewModel.onEvent(SettingsEvent.ToggleCurrencyDialog) }
             )
             SettingsDivider()
             SettingsItem(
                 icon = Icons.Default.DarkMode,
-                title = "Theme",
+                title = stringResource(R.string.settings_theme),
                 subtitle = state.themeMode.displayName,
                 onClick = { viewModel.onEvent(SettingsEvent.ToggleThemeDialog) }
             )
@@ -151,13 +154,13 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Data Section
-        SectionHeader(title = "Data")
+        SectionHeader(title = stringResource(R.string.settings_section_data))
 
         SettingsCard {
             SettingsItem(
                 icon = Icons.Default.FileDownload,
-                title = "Export to CSV",
-                subtitle = "Save transactions to Downloads",
+                title = stringResource(R.string.settings_export_csv),
+                subtitle = stringResource(R.string.settings_export_subtitle),
                 onClick = { viewModel.onEvent(SettingsEvent.ExportData) }
             )
         }
@@ -165,13 +168,13 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // About Section
-        SectionHeader(title = "About")
+        SectionHeader(title = stringResource(R.string.settings_section_about))
 
         SettingsCard {
             SettingsItem(
                 icon = Icons.Default.Info,
-                title = "About ExpenseTracker",
-                subtitle = "Version ${state.appVersion}",
+                title = stringResource(R.string.settings_about_title),
+                subtitle = stringResource(R.string.settings_version, state.appVersion),
                 onClick = { viewModel.onEvent(SettingsEvent.ToggleAboutDialog) }
             )
         }
@@ -311,7 +314,7 @@ private fun SelectionDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.home_dialog_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     )

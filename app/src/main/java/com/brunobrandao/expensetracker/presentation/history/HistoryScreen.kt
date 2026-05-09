@@ -31,9 +31,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.brunobrandao.expensetracker.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brunobrandao.expensetracker.domain.model.Category
@@ -72,6 +74,7 @@ fun HistoryScreen(
     var detailTransaction by remember { mutableStateOf<Transaction?>(null) }
     var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
     var pendingDeleteTransaction by remember { mutableStateOf<Transaction?>(null) }
+    var pendingSwipeDeleteTransaction by remember { mutableStateOf<Transaction?>(null) }
 
     // Detail Dialog
     detailTransaction?.let { transaction ->
@@ -86,7 +89,7 @@ fun HistoryScreen(
         AlertDialog(
             onDismissRequest = { selectedTransaction = null },
             title = { Text(transaction.description, fontWeight = FontWeight.Bold) },
-            text = { Text("What would you like to do with this transaction?") },
+            text = { Text(stringResource(R.string.home_dialog_action_prompt)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -94,7 +97,7 @@ fun HistoryScreen(
                         onEditTransaction(transaction.id)
                     }
                 ) {
-                    Text("Edit", color = CardGreen, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.home_dialog_edit), color = CardGreen, fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
@@ -104,18 +107,18 @@ fun HistoryScreen(
                         selectedTransaction = null
                     }
                 ) {
-                    Text("Delete", color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.home_dialog_delete), color = ExpenseRed, fontWeight = FontWeight.SemiBold)
                 }
             }
         )
     }
 
-    // Delete confirmation dialog
+    // Delete confirmation dialog (long press)
     pendingDeleteTransaction?.let { transaction ->
         AlertDialog(
             onDismissRequest = { pendingDeleteTransaction = null },
-            title = { Text("Delete Transaction", fontWeight = FontWeight.Bold) },
-            text = { Text("Are you sure you want to delete this transaction?") },
+            title = { Text(stringResource(R.string.home_dialog_delete_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.home_dialog_delete_confirmation)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -123,12 +126,36 @@ fun HistoryScreen(
                         pendingDeleteTransaction = null
                     }
                 ) {
-                    Text("Confirm", color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.home_dialog_confirm), color = ExpenseRed, fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingDeleteTransaction = null }) {
-                    Text("Cancel", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.home_dialog_cancel), fontWeight = FontWeight.SemiBold)
+                }
+            }
+        )
+    }
+
+    // Delete confirmation dialog (swipe)
+    pendingSwipeDeleteTransaction?.let { transaction ->
+        AlertDialog(
+            onDismissRequest = { pendingSwipeDeleteTransaction = null },
+            title = { Text(stringResource(R.string.home_dialog_delete_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.home_dialog_delete_confirmation)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.onEvent(HistoryEvent.DeleteTransaction(transaction.id))
+                        pendingSwipeDeleteTransaction = null
+                    }
+                ) {
+                    Text(stringResource(R.string.home_dialog_confirm), color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingSwipeDeleteTransaction = null }) {
+                    Text(stringResource(R.string.home_dialog_cancel), fontWeight = FontWeight.SemiBold)
                 }
             }
         )
@@ -164,7 +191,7 @@ fun HistoryScreen(
     ) {
         // Title
         Text(
-            text = "History",
+            text = stringResource(R.string.history_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
@@ -185,7 +212,7 @@ fun HistoryScreen(
                         viewModel.onEvent(HistoryEvent.FilterByType(null))
                         viewModel.onEvent(HistoryEvent.FilterByCategory(null))
                     },
-                    label = { Text("All", style = MaterialTheme.typography.labelSmall) },
+                    label = { Text(stringResource(R.string.history_filter_all), style = MaterialTheme.typography.labelSmall) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = GreenPrimary,
                         selectedLabelColor = Color.White
@@ -236,7 +263,7 @@ fun HistoryScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No transactions found",
+                    text = stringResource(R.string.history_empty),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -295,11 +322,9 @@ fun HistoryScreen(
                         val dismissState = rememberSwipeToDismissBoxState(
                             confirmValueChange = { dismissValue ->
                                 if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
-                                    viewModel.onEvent(HistoryEvent.DeleteTransaction(transaction.id))
-                                    true
-                                } else {
-                                    false
+                                    pendingSwipeDeleteTransaction = transaction
                                 }
+                                false
                             }
                         )
 
@@ -313,7 +338,7 @@ fun HistoryScreen(
                                     contentAlignment = Alignment.CenterEnd
                                 ) {
                                     Text(
-                                        text = "Delete",
+                                        text = stringResource(R.string.home_dialog_delete),
                                         color = ExpenseRed,
                                         fontWeight = FontWeight.SemiBold,
                                         modifier = Modifier.padding(end = 16.dp)
@@ -334,7 +359,7 @@ fun HistoryScreen(
                 // Swipe hint
                 item {
                     Text(
-                        text = "Swipe left to delete a transaction",
+                        text = stringResource(R.string.history_swipe_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,

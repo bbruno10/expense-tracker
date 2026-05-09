@@ -7,11 +7,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
 import com.brunobrandao.expensetracker.data.preferences.ThemeMode
 import com.brunobrandao.expensetracker.data.preferences.UserPreferences
 import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.presentation.navigation.ExpenseNavHost
+import com.brunobrandao.expensetracker.presentation.splash.SplashScreen
 import com.brunobrandao.expensetracker.presentation.util.CurrencyFormatter
 import com.brunobrandao.expensetracker.ui.theme.ExpenseTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,9 +29,12 @@ class MainActivity : ComponentActivity() {
     lateinit var preferencesRepository: UserPreferencesRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            var showSplash by remember { mutableStateOf(true) }
+
             val preferences by preferencesRepository.userPreferences.collectAsState(
                 initial = UserPreferences()
             )
@@ -41,9 +49,13 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.SYSTEM -> null
             }
 
-            ExpenseTrackerTheme(darkTheme = darkTheme) {
-                val navController = rememberNavController()
-                ExpenseNavHost(navController = navController)
+            if (showSplash) {
+                SplashScreen(onSplashFinished = { showSplash = false })
+            } else {
+                ExpenseTrackerTheme(darkTheme = darkTheme) {
+                    val navController = rememberNavController()
+                    ExpenseNavHost(navController = navController)
+                }
             }
         }
     }

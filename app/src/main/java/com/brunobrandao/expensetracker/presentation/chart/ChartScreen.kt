@@ -45,8 +45,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.brunobrandao.expensetracker.R
 import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.presentation.home.PeriodNavigator
 import com.brunobrandao.expensetracker.presentation.home.TimePeriod
@@ -87,7 +89,7 @@ fun ChartScreen(
             // Title
             item {
                 Text(
-                    text = "Charts",
+                    text = stringResource(R.string.chart_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -132,7 +134,7 @@ fun ChartScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No expense data for this period.\nAdd some transactions to see analytics!",
+                            text = stringResource(R.string.chart_empty_state),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -150,7 +152,7 @@ fun ChartScreen(
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Text(
-                            text = "Expenses by category",
+                            text = stringResource(R.string.chart_expenses_by_category),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -173,7 +175,7 @@ fun ChartScreen(
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Text(
-                            text = "Category breakdown",
+                            text = stringResource(R.string.chart_category_breakdown),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -200,7 +202,7 @@ fun ChartScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Total expenses this month",
+                                text = stringResource(R.string.chart_total_expenses_label),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -275,7 +277,7 @@ private fun DonutWithLegend(
                     maxLines = 1
                 )
                 Text(
-                    text = "Total Spent",
+                    text = stringResource(R.string.chart_total_spent),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

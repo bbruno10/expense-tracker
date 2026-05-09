@@ -393,7 +393,7 @@ private fun BalanceCard(
                     )
                     Icon(
                         imageVector = if (isNegative) Icons.Default.TrendingDown else Icons.Default.TrendingUp,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.cd_balance_trend),
                         tint = Color.White.copy(alpha = 0.6f),
                         modifier = Modifier.size(24.dp)
                     )
@@ -431,7 +431,7 @@ private fun BalanceCard(
                             ) {
                                 Icon(
                                     Icons.Default.ArrowUpward,
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.home_income),
                                     tint = Color(0xFF90EE90),
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -473,7 +473,7 @@ private fun BalanceCard(
                             ) {
                                 Icon(
                                     Icons.Default.ArrowDownward,
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.home_expenses),
                                     tint = Color(0xFFFF5252),
                                     modifier = Modifier.size(16.dp)
                                 )
