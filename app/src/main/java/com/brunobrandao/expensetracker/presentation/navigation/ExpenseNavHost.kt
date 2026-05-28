@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,9 +24,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -104,57 +99,19 @@ fun ExpenseNavHost(navController: NavHostController) {
         bottomBar = {
             if (showBottomBar) {
                 Box {
-                    NavigationBar(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 8.dp,
-                        modifier = Modifier.height(80.dp)
-                    ) {
-                        bottomNavItems.forEachIndexed { index, item ->
-                            if (index == 2) {
-                                NavigationBarItem(
-                                    selected = false,
-                                    onClick = {},
-                                    icon = { Box(modifier = Modifier.size(24.dp)) },
-                                    label = { Text("") },
-                                    enabled = false,
-                                    colors = NavigationBarItemDefaults.colors(
-                                        indicatorColor = Color.Transparent
-                                    )
-                                )
-                            } else {
-                                val isSelected = currentDestination?.hierarchy?.any {
-                                    it.route == item.screen.route
-                                } == true
-
-                                NavigationBarItem(
-                                    selected = isSelected,
-                                    onClick = {
-                                        navController.navigate(item.screen.route) {
-                                            popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = false
-                                            }
-                                            launchSingleTop = true
-                                            restoreState = false
-                                        }
-                                    },
-                                    icon = {
-                                        Icon(
-                                            imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                                            contentDescription = item.label
-                                        )
-                                    },
-                                    label = { Text(item.label, style = MaterialTheme.typography.labelSmall) },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = GreenPrimary,
-                                        selectedTextColor = GreenPrimary,
-                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        indicatorColor = GreenPrimary.copy(alpha = 0.1f)
-                                    )
-                                )
+                    GooeyBottomNavBar(
+                        items = bottomNavItems,
+                        currentDestination = currentDestination,
+                        onItemClick = { item ->
+                            navController.navigate(item.screen.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = false
+                                }
+                                launchSingleTop = true
+                                restoreState = false
                             }
                         }
-                    }
+                    )
 
                     // Center FAB with "Add" label
                     Column(
