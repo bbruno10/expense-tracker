@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Keystore e credenciais de assinatura — nunca commitar
+key.properties
+*.jks
+*.keystore

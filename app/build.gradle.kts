@@ -1,8 +1,17 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
+}
+
+// Carrega key.properties da raiz do projeto (ignorado se o arquivo não existir,
+// permitindo builds em CI sem a keystore local).
+val keyPropertiesFile = rootProject.file("key.properties")
+val keyProperties = Properties().also { props ->
+    if (keyPropertiesFile.exists()) keyPropertiesFile.reader(Charsets.UTF_8).use { props.load(it) }
 }
 
 android {
@@ -17,14 +26,24 @@ android {
         applicationId = "com.brunobrandao.expensetracker"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile     = file(keyProperties["storeFile"]     as String)
+            storePassword = keyProperties["storePassword"]      as String
+            keyAlias      = keyProperties["keyAlias"]           as String
+            keyPassword   = keyProperties["keyPassword"]        as String
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
