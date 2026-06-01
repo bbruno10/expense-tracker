@@ -18,3 +18,6 @@ local.properties
 key.properties
 *.jks
 *.keystore
+
+# Firebase — injetado via CI secret (GOOGLE_SERVICES_JSON)
+app/google-services.json
