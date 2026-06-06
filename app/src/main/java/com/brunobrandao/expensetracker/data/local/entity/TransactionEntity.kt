@@ -13,7 +13,10 @@ data class TransactionEntity(
     val amount: Double,
     val type: TransactionType,
     val category: Category,
-    val date: Long, // timestamp em millis
+    val date: Long,
     val note: String = "",
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val remoteId: String = "",
+    val synced: Boolean = false,
+    val updatedAt: Long = System.currentTimeMillis()
 )

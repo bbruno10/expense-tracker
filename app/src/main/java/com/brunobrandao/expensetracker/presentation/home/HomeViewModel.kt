@@ -2,7 +2,9 @@ package com.brunobrandao.expensetracker.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.model.TransactionType
+import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.usecase.DeleteTransactionUseCase
 import com.brunobrandao.expensetracker.domain.usecase.GetBalanceUseCase
 import com.brunobrandao.expensetracker.domain.usecase.GetTotalByTypeUseCase
@@ -26,7 +28,9 @@ class HomeViewModel @Inject constructor(
     private val getTransactionsByDateRange: GetTransactionsByDateRangeUseCase,
     private val getBalance: GetBalanceUseCase,
     private val getTotalByType: GetTotalByTypeUseCase,
-    private val deleteTransaction: DeleteTransactionUseCase
+    private val deleteTransaction: DeleteTransactionUseCase,
+    private val authRepository: AuthRepository,
+    private val syncRepository: SyncRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -61,7 +65,13 @@ class HomeViewModel @Inject constructor(
 
     fun onDeleteTransaction(id: Long) {
         viewModelScope.launch {
-            deleteTransaction(id)
+            val userId = authRepository.currentUserId
+            if (userId != null) {
+                // syncDelete handles both the local delete and the Firestore delete
+                syncRepository.syncDelete(id, userId)
+            } else {
+                deleteTransaction(id)
+            }
         }
     }
 

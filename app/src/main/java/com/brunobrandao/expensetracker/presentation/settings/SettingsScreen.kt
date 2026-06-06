@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DarkMode
@@ -52,6 +53,7 @@ private val GreenPrimary = Color(0xFF1D9E75)
 
 @Composable
 fun SettingsScreen(
+    onSignOut: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -163,6 +165,36 @@ fun SettingsScreen(
                 subtitle = stringResource(R.string.settings_export_subtitle),
                 onClick = { viewModel.onEvent(SettingsEvent.ExportData) }
             )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Account Section
+        SectionHeader(title = "Account")
+
+        SettingsCard {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onSignOut)
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "Sign out",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))

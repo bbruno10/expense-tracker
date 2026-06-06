@@ -21,3 +21,10 @@ key.properties
 
 # Firebase — injetado via CI secret (GOOGLE_SERVICES_JSON)
 app/google-services.json
+
+# IDE extras não cobertos acima
+/.idea/.name
+/.idea/markdown.xml
+
+# Claude Code — memória local de sessão
+.claude/

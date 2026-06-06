@@ -117,6 +117,9 @@ dependencies {
     testImplementation("app.cash.turbine:turbine:1.0.0")
     testImplementation("io.mockk:mockk:1.13.8")
 
+    // Coroutines Play Services (await() on Firebase Tasks)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
+
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 

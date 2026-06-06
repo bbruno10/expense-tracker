@@ -2,7 +2,9 @@ package com.brunobrandao.expensetracker.presentation.add
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.model.Transaction
+import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
 import com.brunobrandao.expensetracker.domain.usecase.AddTransactionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +18,9 @@ import javax.inject.Inject
 @HiltViewModel
 class AddTransactionViewModel @Inject constructor(
     private val addTransaction: AddTransactionUseCase,
-    private val repository: TransactionRepository
+    private val repository: TransactionRepository,
+    private val authRepository: AuthRepository,
+    private val syncRepository: SyncRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddTransactionUiState())
@@ -96,11 +100,19 @@ class AddTransactionViewModel @Inject constructor(
                     date = state.date,
                     note = state.note.trim()
                 )
-                if (state.isEditing) {
+
+                val localId: Long = if (state.isEditing) {
                     repository.updateTransaction(transaction)
+                    transaction.id
                 } else {
                     addTransaction(transaction)
                 }
+
+                // Write-through: best-effort sync; failure is non-fatal (will retry in startSync)
+                authRepository.currentUserId?.let { userId ->
+                    try { syncRepository.syncWrite(localId, userId) } catch (_: Exception) {}
+                }
+
                 _uiState.update { it.copy(isLoading = false, isSaved = true) }
             } catch (e: Exception) {
                 _uiState.update {
