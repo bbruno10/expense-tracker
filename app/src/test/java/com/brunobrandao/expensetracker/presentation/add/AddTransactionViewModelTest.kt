@@ -1,12 +1,15 @@
 package com.brunobrandao.expensetracker.presentation.add
 
 import com.brunobrandao.expensetracker.domain.model.Category
+import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
+import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
 import com.brunobrandao.expensetracker.domain.usecase.AddTransactionUseCase
+import com.brunobrandao.expensetracker.domain.usecase.GenerateDueRecurringTransactionsUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -33,6 +36,8 @@ class AddTransactionViewModelTest {
     private lateinit var repository: TransactionRepository
     private lateinit var authRepository: AuthRepository
     private lateinit var syncRepository: SyncRepository
+    private lateinit var recurringRepository: RecurringTransactionRepository
+    private lateinit var generateDue: GenerateDueRecurringTransactionsUseCase
     private lateinit var viewModel: AddTransactionViewModel
 
     @Before
@@ -42,7 +47,12 @@ class AddTransactionViewModelTest {
         repository = mockk(relaxed = true)
         authRepository = mockk(relaxed = true)
         syncRepository = mockk(relaxed = true)
-        viewModel = AddTransactionViewModel(addTransactionUseCase, repository, authRepository, syncRepository)
+        recurringRepository = mockk(relaxed = true)
+        generateDue = mockk(relaxed = true)
+        viewModel = AddTransactionViewModel(
+            addTransactionUseCase, repository, authRepository, syncRepository,
+            recurringRepository, generateDue
+        )
     }
 
     @After
@@ -303,5 +313,55 @@ class AddTransactionViewModelTest {
         assertTrue(viewModel.uiState.value.isSaved)
         coVerify { repository.updateTransaction(any()) }
         coVerify(exactly = 0) { addTransactionUseCase(any()) }
+    }
+
+    // ---- Repeat mode ----
+
+    @Test
+    fun `Repeat ON save creates recurring rule via upsert and triggers generateDue`() = runTest {
+        coEvery { recurringRepository.upsert(any()) } returns 1L
+
+        val startDate = 1700000000000L
+        viewModel.onEvent(AddTransactionEvent.RepeatToggled)
+        viewModel.onEvent(AddTransactionEvent.DescriptionChanged("Netflix"))
+        viewModel.onEvent(AddTransactionEvent.AmountChanged("39.90"))
+        viewModel.onEvent(AddTransactionEvent.TypeChanged(TransactionType.EXPENSE))
+        viewModel.onEvent(AddTransactionEvent.CategoryChanged(Category.OTHER))
+        viewModel.onEvent(AddTransactionEvent.FrequencyChanged(RecurringFrequency.MONTHLY))
+        viewModel.onEvent(AddTransactionEvent.StartDateChanged(startDate))
+        viewModel.onEvent(AddTransactionEvent.Save)
+
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isSaved)
+        coVerify {
+            recurringRepository.upsert(match { rule ->
+                rule.description == "Netflix" &&
+                rule.amount == 39.90 &&
+                rule.frequency == RecurringFrequency.MONTHLY &&
+                rule.startDate == startDate &&
+                rule.nextDueDate == startDate &&
+                rule.active
+            })
+        }
+        coVerify { generateDue(any()) }
+        coVerify(exactly = 0) { addTransactionUseCase(any()) }
+    }
+
+    @Test
+    fun `Repeat OFF save creates single transaction not recurring rule`() = runTest {
+        coEvery { addTransactionUseCase(any()) } returns 1L
+
+        // repeatEnabled defaults to false
+        viewModel.onEvent(AddTransactionEvent.DescriptionChanged("Lunch"))
+        viewModel.onEvent(AddTransactionEvent.AmountChanged("25.00"))
+        viewModel.onEvent(AddTransactionEvent.Save)
+
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isSaved)
+        coVerify { addTransactionUseCase(any()) }
+        coVerify(exactly = 0) { recurringRepository.upsert(any()) }
+        coVerify(exactly = 0) { generateDue(any()) }
     }
 }

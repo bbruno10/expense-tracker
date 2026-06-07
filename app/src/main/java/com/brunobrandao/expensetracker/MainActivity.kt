@@ -17,6 +17,9 @@ import com.brunobrandao.expensetracker.data.preferences.UserPreferences
 import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
+import com.brunobrandao.expensetracker.domain.usecase.GenerateDueRecurringTransactionsUseCase
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import com.brunobrandao.expensetracker.presentation.navigation.ExpenseNavHost
 import com.brunobrandao.expensetracker.presentation.splash.SplashScreen
 import com.brunobrandao.expensetracker.presentation.util.CurrencyFormatter
@@ -36,10 +39,15 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var syncRepository: SyncRepository
 
+    @Inject
+    lateinit var generateDueRecurringTransactions: GenerateDueRecurringTransactionsUseCase
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // System.currentTimeMillis() fica aqui, na borda do sistema — nunca dentro do use case.
+        lifecycleScope.launch { generateDueRecurringTransactions(System.currentTimeMillis()) }
         setContent {
             var showSplash by remember { mutableStateOf(true) }
 

@@ -3,10 +3,13 @@ package com.brunobrandao.expensetracker.presentation.add
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
+import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
+import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
 import com.brunobrandao.expensetracker.domain.usecase.AddTransactionUseCase
+import com.brunobrandao.expensetracker.domain.usecase.GenerateDueRecurringTransactionsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +23,9 @@ class AddTransactionViewModel @Inject constructor(
     private val addTransaction: AddTransactionUseCase,
     private val repository: TransactionRepository,
     private val authRepository: AuthRepository,
-    private val syncRepository: SyncRepository
+    private val syncRepository: SyncRepository,
+    private val recurringRepository: RecurringTransactionRepository,
+    private val generateDue: GenerateDueRecurringTransactionsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddTransactionUiState())
@@ -47,29 +52,29 @@ class AddTransactionViewModel @Inject constructor(
 
     fun onEvent(event: AddTransactionEvent) {
         when (event) {
-            is AddTransactionEvent.DescriptionChanged -> {
+            is AddTransactionEvent.DescriptionChanged ->
                 _uiState.update { it.copy(description = event.value) }
-            }
             is AddTransactionEvent.AmountChanged -> {
-                val filtered = event.value.filter { char -> char.isDigit() || char == '.' }
+                val filtered = event.value.filter { c -> c.isDigit() || c == '.' }
                 _uiState.update { it.copy(amount = filtered) }
             }
-            is AddTransactionEvent.TypeChanged -> {
+            is AddTransactionEvent.TypeChanged ->
                 _uiState.update { it.copy(type = event.value) }
-            }
-            is AddTransactionEvent.CategoryChanged -> {
+            is AddTransactionEvent.CategoryChanged ->
                 _uiState.update { it.copy(category = event.value) }
-            }
-            is AddTransactionEvent.DateChanged -> {
+            is AddTransactionEvent.DateChanged ->
                 _uiState.update { it.copy(date = event.value) }
-            }
-            is AddTransactionEvent.NoteChanged -> {
+            is AddTransactionEvent.NoteChanged ->
                 _uiState.update { it.copy(note = event.value) }
-            }
+            is AddTransactionEvent.RepeatToggled ->
+                _uiState.update { it.copy(repeatEnabled = !it.repeatEnabled) }
+            is AddTransactionEvent.FrequencyChanged ->
+                _uiState.update { it.copy(repeatFrequency = event.value) }
+            is AddTransactionEvent.StartDateChanged ->
+                _uiState.update { it.copy(repeatStartDate = event.value) }
             is AddTransactionEvent.Save -> saveTransaction()
-            is AddTransactionEvent.DismissError -> {
+            is AddTransactionEvent.DismissError ->
                 _uiState.update { it.copy(errorMessage = null) }
-            }
         }
     }
 
@@ -80,7 +85,6 @@ class AddTransactionViewModel @Inject constructor(
             _uiState.update { it.copy(errorMessage = "Please enter a description") }
             return
         }
-
         val amount = state.amount.toDoubleOrNull()
         if (amount == null || amount <= 0) {
             _uiState.update { it.copy(errorMessage = "Please enter a valid amount") }
@@ -91,35 +95,49 @@ class AddTransactionViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val transaction = Transaction(
-                    id = state.editingId ?: 0,
-                    description = state.description.trim(),
-                    amount = amount,
-                    type = state.type,
-                    category = state.category,
-                    date = state.date,
-                    note = state.note.trim()
-                )
-
-                val localId: Long = if (state.isEditing) {
-                    repository.updateTransaction(transaction)
-                    transaction.id
+                if (state.repeatEnabled && !state.isEditing) {
+                    // Create recurring rule; generator materialises any already-due transactions.
+                    val rule = RecurringTransaction(
+                        description = state.description.trim(),
+                        amount = amount,
+                        type = state.type,
+                        category = state.category,
+                        note = state.note.trim(),
+                        frequency = state.repeatFrequency,
+                        startDate = state.repeatStartDate,
+                        nextDueDate = state.repeatStartDate,
+                        active = true
+                    )
+                    recurringRepository.upsert(rule)
+                    // System.currentTimeMillis() only at this boundary — never inside the use case.
+                    generateDue(System.currentTimeMillis())
                 } else {
-                    addTransaction(transaction)
-                }
+                    val transaction = Transaction(
+                        id = state.editingId ?: 0,
+                        description = state.description.trim(),
+                        amount = amount,
+                        type = state.type,
+                        category = state.category,
+                        date = state.date,
+                        note = state.note.trim()
+                    )
 
-                // Write-through: best-effort sync; failure is non-fatal (will retry in startSync)
-                authRepository.currentUserId?.let { userId ->
-                    try { syncRepository.syncWrite(localId, userId) } catch (_: Exception) {}
-                }
+                    val localId: Long = if (state.isEditing) {
+                        repository.updateTransaction(transaction)
+                        transaction.id
+                    } else {
+                        addTransaction(transaction)
+                    }
 
+                    // Write-through: best-effort sync; failure is non-fatal (will retry in startSync)
+                    authRepository.currentUserId?.let { userId ->
+                        try { syncRepository.syncWrite(localId, userId) } catch (_: Exception) {}
+                    }
+                }
                 _uiState.update { it.copy(isLoading = false, isSaved = true) }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = "Failed to save: ${e.message}"
-                    )
+                    it.copy(isLoading = false, errorMessage = "Failed to save: ${e.message}")
                 }
             }
         }
