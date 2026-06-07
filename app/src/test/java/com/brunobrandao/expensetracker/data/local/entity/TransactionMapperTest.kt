@@ -62,8 +62,9 @@ class TransactionMapperTest {
     fun `entity to domain and back preserves data`() {
         val domain = sampleEntity.toDomain()
         val backToEntity = domain.toEntity()
-
-        assertEquals(sampleEntity, backToEntity)
+        // updatedAt é um default de relógio (System.currentTimeMillis) e não é
+        // carregado pelo domain model, então normalizamos antes de comparar.
+        assertEquals(sampleEntity, backToEntity.copy(updatedAt = sampleEntity.updatedAt))
     }
 
     @Test
