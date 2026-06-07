@@ -43,8 +43,8 @@ interface TransactionDao {
 
     @Query(
         """
-        SELECT * FROM transactions 
-        WHERE type = :type AND date BETWEEN :startDate AND :endDate 
+        SELECT * FROM transactions
+        WHERE type = :type AND date BETWEEN :startDate AND :endDate
         ORDER BY date DESC
         """
     )
@@ -59,7 +59,7 @@ interface TransactionDao {
 
     @Query(
         """
-        SELECT COALESCE(SUM(amount), 0.0) FROM transactions 
+        SELECT COALESCE(SUM(amount), 0.0) FROM transactions
         WHERE type = :type AND date BETWEEN :startDate AND :endDate
         """
     )
@@ -87,4 +87,27 @@ interface TransactionDao {
         """
     )
     fun getBalanceByDateRange(startDate: Long, endDate: Long): Flow<Double>
+
+    // --- Sync queries ---
+
+    @Query("SELECT * FROM transactions WHERE synced = 0")
+    suspend fun getUnsyncedTransactions(): List<TransactionEntity>
+
+    @Query("SELECT * FROM transactions WHERE remoteId = ''")
+    suspend fun getTransactionsWithoutRemoteId(): List<TransactionEntity>
+
+    @Query("SELECT * FROM transactions WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun getByRemoteId(remoteId: String): TransactionEntity?
+
+    @Query("DELETE FROM transactions WHERE remoteId = :remoteId")
+    suspend fun deleteByRemoteId(remoteId: String)
+
+    @Query("UPDATE transactions SET remoteId = :remoteId, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateRemoteId(id: Long, remoteId: String, updatedAt: Long)
+
+    @Query("UPDATE transactions SET synced = 1 WHERE id = :id")
+    suspend fun markSynced(id: Long)
+
+    @Query("DELETE FROM transactions")
+    suspend fun deleteAll()
 }

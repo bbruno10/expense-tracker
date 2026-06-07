@@ -80,7 +80,14 @@ class TransactionRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateTransaction(transaction: Transaction) {
-        dao.update(transaction.toEntity())
+        // Preserve existing sync fields so remoteId and sync state are not lost on edit.
+        val existing = dao.getTransactionById(transaction.id)
+        val entity = transaction.toEntity().copy(
+            remoteId = existing?.remoteId ?: "",
+            synced = false,
+            updatedAt = System.currentTimeMillis()
+        )
+        dao.update(entity)
     }
 
     override suspend fun deleteTransaction(transaction: Transaction) {

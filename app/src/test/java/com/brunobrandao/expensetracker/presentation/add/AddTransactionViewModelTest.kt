@@ -3,6 +3,8 @@ package com.brunobrandao.expensetracker.presentation.add
 import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
+import com.brunobrandao.expensetracker.data.sync.SyncRepository
+import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
 import com.brunobrandao.expensetracker.domain.usecase.AddTransactionUseCase
 import io.mockk.coEvery
@@ -29,6 +31,8 @@ class AddTransactionViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var addTransactionUseCase: AddTransactionUseCase
     private lateinit var repository: TransactionRepository
+    private lateinit var authRepository: AuthRepository
+    private lateinit var syncRepository: SyncRepository
     private lateinit var viewModel: AddTransactionViewModel
 
     @Before
@@ -36,7 +40,9 @@ class AddTransactionViewModelTest {
         Dispatchers.setMain(testDispatcher)
         addTransactionUseCase = mockk()
         repository = mockk(relaxed = true)
-        viewModel = AddTransactionViewModel(addTransactionUseCase, repository)
+        authRepository = mockk(relaxed = true)
+        syncRepository = mockk(relaxed = true)
+        viewModel = AddTransactionViewModel(addTransactionUseCase, repository, authRepository, syncRepository)
     }
 
     @After

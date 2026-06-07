@@ -4,9 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -15,6 +15,8 @@ import androidx.navigation.compose.rememberNavController
 import com.brunobrandao.expensetracker.data.preferences.ThemeMode
 import com.brunobrandao.expensetracker.data.preferences.UserPreferences
 import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
+import com.brunobrandao.expensetracker.data.sync.SyncRepository
+import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.presentation.navigation.ExpenseNavHost
 import com.brunobrandao.expensetracker.presentation.splash.SplashScreen
 import com.brunobrandao.expensetracker.presentation.util.CurrencyFormatter
@@ -27,6 +29,12 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var preferencesRepository: UserPreferencesRepository
+
+    @Inject
+    lateinit var authRepository: AuthRepository
+
+    @Inject
+    lateinit var syncRepository: SyncRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -41,6 +49,17 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(preferences.currency) {
                 CurrencyFormatter.setCurrency(preferences.currency)
+            }
+
+            // Start sync whenever the user is authenticated (app launch or login)
+            LaunchedEffect(Unit) {
+                authRepository.isAuthenticated.collect { isAuthenticated ->
+                    if (isAuthenticated) {
+                        authRepository.currentUserId?.let { uid ->
+                            syncRepository.startSync(uid)
+                        }
+                    }
+                }
             }
 
             val darkTheme = when (preferences.themeMode) {

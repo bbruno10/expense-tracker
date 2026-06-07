@@ -1,0 +1,15 @@
+// IMPORTANTE: Estas regras precisam ser publicadas no Firebase Console
+// (Firestore Database -> Regras) ou via Firebase CLI:
+//   firebase deploy --only firestore:rules
+//
+// Enquanto não forem publicadas, o banco continua com as regras de teste
+// (allow read, write: if true) que expiram automaticamente.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/transactions/{transactionId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
