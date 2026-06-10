@@ -130,6 +130,18 @@ class EditRecurringViewModelTest {
     }
 
     @Test
+    fun `NextDueDateChanged updates nextDueDate in state`() = runTest {
+        coEvery { recurringRepository.getById(1L) } returns sampleRule
+        viewModel.load(1L)
+        advanceUntilIdle()
+
+        val newDate = 1705708800000L  // fixed millis, no System.currentTimeMillis()
+        viewModel.onEvent(EditRecurringEvent.NextDueDateChanged(newDate))
+
+        assertEquals(newDate, viewModel.uiState.value.nextDueDate)
+    }
+
+    @Test
     fun `delete calls deleteById and sets isDeleted`() = runTest {
         coEvery { recurringRepository.getById(1L) } returns sampleRule
         viewModel.load(1L)

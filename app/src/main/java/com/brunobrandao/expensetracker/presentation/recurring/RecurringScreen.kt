@@ -43,12 +43,15 @@ import com.brunobrandao.expensetracker.presentation.util.CurrencyFormatter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 private val GreenPrimary = Color(0xFF1D9E75)
 private val IncomeGreen = Color(0xFF43A047)
 private val ExpenseRed = Color(0xFFE53935)
 
-private val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US)
+private val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US).also {
+    it.timeZone = TimeZone.getTimeZone("UTC")
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

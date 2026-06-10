@@ -22,11 +22,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -43,6 +46,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -66,12 +70,15 @@ import com.brunobrandao.expensetracker.domain.model.TransactionType
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 private val GreenPrimary = Color(0xFF1D9E75)
 private val RedExpense = Color(0xFFE53935)
 private val GreenIncome = Color(0xFF43A047)
 
-private val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US)
+private val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US).also {
+    it.timeZone = TimeZone.getTimeZone("UTC")
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -84,6 +91,7 @@ fun EditRecurringScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showNextDatePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(recurringId) { viewModel.load(recurringId) }
 
@@ -96,6 +104,28 @@ fun EditRecurringScreen(
             snackbarHostState.showSnackbar(msg)
             viewModel.onEvent(EditRecurringEvent.DismissError)
         }
+    }
+
+    if (showNextDatePicker && state.nextDueDate > 0L) {
+        val nextDatePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = state.nextDueDate
+        )
+        DatePickerDialog(
+            onDismissRequest = { showNextDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        nextDatePickerState.selectedDateMillis?.let { millis ->
+                            viewModel.onEvent(EditRecurringEvent.NextDueDateChanged(millis))
+                        }
+                        showNextDatePicker = false
+                    }
+                ) { Text("Confirm", color = GreenPrimary) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNextDatePicker = false }) { Text("Cancel") }
+            }
+        ) { DatePicker(state = nextDatePickerState) }
     }
 
     if (showDeleteConfirm) {
@@ -238,13 +268,31 @@ fun EditRecurringScreen(
                 )
             }
 
-            // Next due (read-only info)
+            // Next due date (editable)
             if (state.nextDueDate > 0L) {
-                Text(
-                    text = "Next due: ${dateFormat.format(Date(state.nextDueDate))}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text("Next due date", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                        .clickable { showNextDatePicker = true }
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = dateFormat.format(Date(state.nextDueDate)),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Icon(Icons.Default.CalendarMonth, contentDescription = "Select next due date", tint = GreenPrimary, modifier = Modifier.size(24.dp))
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))

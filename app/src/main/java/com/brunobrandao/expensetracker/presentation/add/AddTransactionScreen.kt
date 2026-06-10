@@ -69,12 +69,16 @@ import com.brunobrandao.expensetracker.domain.model.TransactionType
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 private val GreenPrimary = Color(0xFF1D9E75)
 private val RedExpense = Color(0xFFE53935)
 private val GreenIncome = Color(0xFF43A047)
 
 private val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US)
+private val recurringDateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US).also {
+    it.timeZone = TimeZone.getTimeZone("UTC")
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -431,7 +435,7 @@ fun AddTransactionScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = dateFormat.format(Date(state.repeatStartDate)),
+                                text = recurringDateFormat.format(Date(state.repeatStartDate)),
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Icon(Icons.Default.CalendarMonth, contentDescription = "Select start date", tint = GreenPrimary, modifier = Modifier.size(24.dp))

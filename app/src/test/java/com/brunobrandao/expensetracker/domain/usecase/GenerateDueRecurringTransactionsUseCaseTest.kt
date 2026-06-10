@@ -16,6 +16,7 @@ import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.util.TimeZone
 
 /** Converte LocalDate (UTC meia-noite) para epoch millis. */
 private fun LocalDate.toUtcMillis(): Long =
@@ -248,6 +249,33 @@ class GenerateDueRecurringTransactionsUseCaseTest {
         assertEquals(jan31_2024, txRepo.inserted[0].date)
         // nextDueDate deve ser 29/fev/2024, não 03/mar nem algo inválido
         assertEquals(feb29_2024, recurringRepo.rules[0].nextDueDate)
+    }
+
+    // ── Regressão: fuso horário não desloca o dia ─────────────────────────────
+
+    @Test
+    fun `advanceDate stays on correct calendar day under non-UTC timezone`() = runTest {
+        val jan8  = LocalDate.of(2024, 1, 8).toUtcMillis()
+        val feb8  = LocalDate.of(2024, 2, 8).toUtcMillis()
+        val mar8  = LocalDate.of(2024, 3, 8).toUtcMillis()
+        val apr8  = LocalDate.of(2024, 4, 8).toUtcMillis()
+
+        val originalTz = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("America/Sao_Paulo"))
+        try {
+            recurringRepo.rules.add(makeRule(nextDueDate = jan8))
+
+            // mar31: jan8, feb8, mar8 are due; apr8 is not
+            useCase(mar31_2024)
+
+            assertEquals(3, txRepo.inserted.size)
+            assertEquals(jan8, txRepo.inserted[0].date)
+            assertEquals(feb8, txRepo.inserted[1].date)
+            assertEquals(mar8, txRepo.inserted[2].date)
+            assertEquals(apr8, recurringRepo.rules[0].nextDueDate)
+        } finally {
+            TimeZone.setDefault(originalTz)
+        }
     }
 
     // ── Extra: múltiplas regras independentes ─────────────────────────────────

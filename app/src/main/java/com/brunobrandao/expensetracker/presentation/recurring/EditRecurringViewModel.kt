@@ -41,6 +41,7 @@ sealed interface EditRecurringEvent {
     data class NoteChanged(val value: String) : EditRecurringEvent
     data class FrequencyChanged(val value: RecurringFrequency) : EditRecurringEvent
     data class ActiveChanged(val value: Boolean) : EditRecurringEvent
+    data class NextDueDateChanged(val value: Long) : EditRecurringEvent
     data object Save : EditRecurringEvent
     data object Delete : EditRecurringEvent
     data object DismissError : EditRecurringEvent
@@ -100,6 +101,8 @@ class EditRecurringViewModel @Inject constructor(
                 _uiState.update { it.copy(frequency = event.value) }
             is EditRecurringEvent.ActiveChanged ->
                 _uiState.update { it.copy(active = event.value) }
+            is EditRecurringEvent.NextDueDateChanged ->
+                _uiState.update { it.copy(nextDueDate = event.value) }
             is EditRecurringEvent.Save -> save()
             is EditRecurringEvent.Delete -> delete()
             is EditRecurringEvent.DismissError ->
