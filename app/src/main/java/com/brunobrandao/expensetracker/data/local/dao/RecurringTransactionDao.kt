@@ -46,4 +46,13 @@ interface RecurringTransactionDao {
 
     @Query("UPDATE recurring_transactions SET synced = 1 WHERE id = :id")
     suspend fun markSynced(id: Long)
+
+    @Query("SELECT * FROM recurring_transactions WHERE remoteId = ''")
+    suspend fun getRecurringWithoutRemoteId(): List<RecurringTransactionEntity>
+
+    @Query("DELETE FROM recurring_transactions WHERE remoteId = :remoteId")
+    suspend fun deleteByRemoteId(remoteId: String)
+
+    @Query("DELETE FROM recurring_transactions")
+    suspend fun deleteAll()
 }

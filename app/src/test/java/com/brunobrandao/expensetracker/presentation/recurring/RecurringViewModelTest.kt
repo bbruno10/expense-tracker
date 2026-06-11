@@ -1,5 +1,7 @@
 package com.brunobrandao.expensetracker.presentation.recurring
 
+import com.brunobrandao.expensetracker.data.sync.SyncRepository
+import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import io.mockk.coVerify
 import io.mockk.every
@@ -21,14 +23,19 @@ class RecurringViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var recurringRepository: RecurringTransactionRepository
+    private lateinit var syncRepository: SyncRepository
+    private lateinit var authRepository: AuthRepository
     private lateinit var viewModel: RecurringViewModel
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         recurringRepository = mockk(relaxed = true)
+        syncRepository = mockk(relaxed = true)
+        authRepository = mockk(relaxed = true)
+        every { authRepository.currentUserId } returns null
         every { recurringRepository.observeAll() } returns flowOf(emptyList())
-        viewModel = RecurringViewModel(recurringRepository)
+        viewModel = RecurringViewModel(recurringRepository, syncRepository, authRepository)
     }
 
     @After

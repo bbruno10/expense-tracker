@@ -2,7 +2,9 @@ package com.brunobrandao.expensetracker.presentation.recurring
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
+import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -13,7 +15,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RecurringViewModel @Inject constructor(
-    private val recurringRepository: RecurringTransactionRepository
+    private val recurringRepository: RecurringTransactionRepository,
+    private val syncRepository: SyncRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     val rules: StateFlow<List<RecurringTransaction>> = recurringRepository.observeAll()
@@ -24,10 +28,24 @@ class RecurringViewModel @Inject constructor(
         )
 
     fun setActive(id: Long, active: Boolean) {
-        viewModelScope.launch { recurringRepository.setActive(id, active) }
+        viewModelScope.launch {
+            recurringRepository.setActive(id, active)
+            authRepository.currentUserId?.let { userId ->
+                try { syncRepository.syncWriteRecurring(id, userId) } catch (_: Exception) {}
+            }
+        }
     }
 
     fun deleteById(id: Long) {
-        viewModelScope.launch { recurringRepository.deleteById(id) }
+        viewModelScope.launch {
+            val userId = authRepository.currentUserId
+            if (userId != null) {
+                try { syncRepository.syncDeleteRecurring(id, userId) } catch (_: Exception) {
+                    recurringRepository.deleteById(id)
+                }
+            } else {
+                recurringRepository.deleteById(id)
+            }
+        }
     }
 }

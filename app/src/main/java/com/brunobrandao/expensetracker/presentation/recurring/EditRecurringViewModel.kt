@@ -2,10 +2,12 @@ package com.brunobrandao.expensetracker.presentation.recurring
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
+import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,7 +51,9 @@ sealed interface EditRecurringEvent {
 
 @HiltViewModel
 class EditRecurringViewModel @Inject constructor(
-    private val recurringRepository: RecurringTransactionRepository
+    private val recurringRepository: RecurringTransactionRepository,
+    private val syncRepository: SyncRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EditRecurringUiState())
@@ -138,6 +142,9 @@ class EditRecurringViewModel @Inject constructor(
                         active = state.active
                     )
                 )
+                authRepository.currentUserId?.let { userId ->
+                    try { syncRepository.syncWriteRecurring(state.id, userId) } catch (_: Exception) {}
+                }
                 _uiState.update { it.copy(isLoading = false, isSaved = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = "Failed to save: ${e.message}") }
@@ -149,7 +156,12 @@ class EditRecurringViewModel @Inject constructor(
         val state = _uiState.value
         viewModelScope.launch {
             try {
-                recurringRepository.deleteById(state.id)
+                val userId = authRepository.currentUserId
+                if (userId != null) {
+                    syncRepository.syncDeleteRecurring(state.id, userId)
+                } else {
+                    recurringRepository.deleteById(state.id)
+                }
                 _uiState.update { it.copy(isDeleted = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Failed to delete: ${e.message}") }

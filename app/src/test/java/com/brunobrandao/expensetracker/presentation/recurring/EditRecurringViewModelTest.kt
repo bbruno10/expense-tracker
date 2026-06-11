@@ -4,9 +4,12 @@ import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
+import com.brunobrandao.expensetracker.data.sync.SyncRepository
+import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,6 +30,8 @@ class EditRecurringViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var recurringRepository: RecurringTransactionRepository
+    private lateinit var syncRepository: SyncRepository
+    private lateinit var authRepository: AuthRepository
     private lateinit var viewModel: EditRecurringViewModel
 
     // Datas fixas — sem System.currentTimeMillis() em nenhum assert.
@@ -50,7 +55,10 @@ class EditRecurringViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         recurringRepository = mockk(relaxed = true)
-        viewModel = EditRecurringViewModel(recurringRepository)
+        syncRepository = mockk(relaxed = true)
+        authRepository = mockk(relaxed = true)
+        every { authRepository.currentUserId } returns null
+        viewModel = EditRecurringViewModel(recurringRepository, syncRepository, authRepository)
     }
 
     @After
