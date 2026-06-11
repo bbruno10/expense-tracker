@@ -315,6 +315,56 @@ class AddTransactionViewModelTest {
         coVerify(exactly = 0) { addTransactionUseCase(any()) }
     }
 
+    @Test
+    fun `loadTransaction preserves recurringId in state`() = runTest {
+        val existingTransaction = Transaction(
+            id = 7L,
+            description = "Netflix",
+            amount = 39.90,
+            type = TransactionType.EXPENSE,
+            category = Category.OTHER,
+            date = 1700000000000L,
+            note = "",
+            recurringId = 3L
+        )
+
+        coEvery { repository.getTransactionById(7L) } returns existingTransaction
+
+        viewModel.loadTransaction(7L)
+        advanceUntilIdle()
+
+        assertEquals(3L, viewModel.uiState.value.recurringId)
+    }
+
+    @Test
+    fun `Save in edit mode preserves recurringId on updated Transaction`() = runTest {
+        val existingTransaction = Transaction(
+            id = 7L,
+            description = "Netflix",
+            amount = 39.90,
+            type = TransactionType.EXPENSE,
+            category = Category.OTHER,
+            date = 1700000000000L,
+            note = "",
+            recurringId = 3L
+        )
+
+        coEvery { repository.getTransactionById(7L) } returns existingTransaction
+        coEvery { repository.updateTransaction(any()) } returns Unit
+
+        viewModel.loadTransaction(7L)
+        advanceUntilIdle()
+
+        viewModel.onEvent(AddTransactionEvent.AmountChanged("45.00"))
+        viewModel.onEvent(AddTransactionEvent.Save)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isSaved)
+        coVerify {
+            repository.updateTransaction(match { t -> t.recurringId == 3L })
+        }
+    }
+
     // ---- Repeat mode ----
 
     @Test

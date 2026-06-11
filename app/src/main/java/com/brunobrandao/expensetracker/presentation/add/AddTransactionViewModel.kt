@@ -43,7 +43,8 @@ class AddTransactionViewModel @Inject constructor(
                         type = transaction.type,
                         category = transaction.category,
                         date = transaction.date,
-                        note = transaction.note
+                        note = transaction.note,
+                        recurringId = transaction.recurringId
                     )
                 }
             }
@@ -108,9 +109,12 @@ class AddTransactionViewModel @Inject constructor(
                         nextDueDate = state.repeatStartDate,
                         active = true
                     )
-                    recurringRepository.upsert(rule)
+                    val insertedId = recurringRepository.upsert(rule)
                     // System.currentTimeMillis() only at this boundary — never inside the use case.
                     generateDue(System.currentTimeMillis())
+                    authRepository.currentUserId?.let { userId ->
+                        try { syncRepository.syncWriteRecurring(insertedId, userId) } catch (_: Exception) {}
+                    }
                 } else {
                     val transaction = Transaction(
                         id = state.editingId ?: 0,
@@ -119,7 +123,8 @@ class AddTransactionViewModel @Inject constructor(
                         type = state.type,
                         category = state.category,
                         date = state.date,
-                        note = state.note.trim()
+                        note = state.note.trim(),
+                        recurringId = state.recurringId
                     )
 
                     val localId: Long = if (state.isEditing) {

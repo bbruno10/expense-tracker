@@ -19,7 +19,8 @@ data class AddTransactionUiState(
     val errorMessage: String? = null,
     val repeatEnabled: Boolean = false,
     val repeatFrequency: RecurringFrequency = RecurringFrequency.MONTHLY,
-    val repeatStartDate: Long = LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+    val repeatStartDate: Long = LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+    val recurringId: Long? = null
 ) {
     val isEditing: Boolean get() = editingId != null
 }
