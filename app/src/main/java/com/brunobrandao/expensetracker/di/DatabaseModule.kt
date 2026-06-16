@@ -3,10 +3,13 @@ package com.brunobrandao.expensetracker.di
 import android.content.Context
 import androidx.room.Room
 import com.brunobrandao.expensetracker.data.local.AppDatabase
+import com.brunobrandao.expensetracker.data.local.dao.RecurringTransactionDao
 import com.brunobrandao.expensetracker.data.local.dao.TransactionDao
 import com.brunobrandao.expensetracker.data.repository.AuthRepositoryImpl
+import com.brunobrandao.expensetracker.data.repository.RecurringTransactionRepositoryImpl
 import com.brunobrandao.expensetracker.data.repository.TransactionRepositoryImpl
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
+import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
 import dagger.Binds
 import dagger.Module
@@ -30,7 +33,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
         )
-            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
             .build()
     }
 
@@ -38,6 +41,12 @@ object DatabaseModule {
     @Singleton
     fun provideTransactionDao(database: AppDatabase): TransactionDao {
         return database.transactionDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRecurringTransactionDao(database: AppDatabase): RecurringTransactionDao {
+        return database.recurringTransactionDao()
     }
 }
 
@@ -56,4 +65,10 @@ abstract class RepositoryModule {
     abstract fun bindAuthRepository(
         impl: AuthRepositoryImpl
     ): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRecurringTransactionRepository(
+        impl: RecurringTransactionRepositoryImpl
+    ): RecurringTransactionRepository
 }

@@ -1,13 +1,14 @@
 package com.brunobrandao.expensetracker.domain.model
 
-data class Transaction(
+data class RecurringTransaction(
     val id: Long = 0,
     val description: String,
     val amount: Double,
     val type: TransactionType,
     val category: Category,
-    val date: Long,
     val note: String = "",
-    val createdAt: Long = System.currentTimeMillis(),
-    val recurringId: Long? = null
+    val frequency: RecurringFrequency,
+    val startDate: Long,
+    val nextDueDate: Long,
+    val active: Boolean = true
 )

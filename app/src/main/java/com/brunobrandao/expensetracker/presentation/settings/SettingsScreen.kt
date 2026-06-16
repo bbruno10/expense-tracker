@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FileDownload
@@ -54,6 +55,7 @@ private val GreenPrimary = Color(0xFF1D9E75)
 @Composable
 fun SettingsScreen(
     onSignOut: () -> Unit,
+    onNavigateToRecurring: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -164,6 +166,13 @@ fun SettingsScreen(
                 title = stringResource(R.string.settings_export_csv),
                 subtitle = stringResource(R.string.settings_export_subtitle),
                 onClick = { viewModel.onEvent(SettingsEvent.ExportData) }
+            )
+            SettingsDivider()
+            SettingsItem(
+                icon = Icons.Default.Autorenew,
+                title = "Recurring expenses",
+                subtitle = "Manage your recurring rules",
+                onClick = onNavigateToRecurring
             )
         }
 

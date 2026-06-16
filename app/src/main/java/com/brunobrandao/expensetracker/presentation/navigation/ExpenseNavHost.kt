@@ -1,5 +1,7 @@
 package com.brunobrandao.expensetracker.presentation.navigation
 
+import com.brunobrandao.expensetracker.presentation.recurring.EditRecurringScreen
+import com.brunobrandao.expensetracker.presentation.recurring.RecurringScreen
 import com.brunobrandao.expensetracker.presentation.settings.SettingsScreen
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -256,7 +258,29 @@ fun ExpenseNavHost(navController: NavHostController) {
                             navController.navigate(Screen.Login.route) {
                                 popUpTo(0) { inclusive = true }
                             }
+                        },
+                        onNavigateToRecurring = {
+                            navController.navigate(Screen.Recurring.route)
                         }
+                    )
+                }
+
+                composable(Screen.Recurring.route) {
+                    RecurringScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToAdd = { navController.navigate(Screen.AddTransaction.route) },
+                        onEditRule = { id -> navController.navigate(Screen.EditRecurring.createRoute(id)) }
+                    )
+                }
+
+                composable(
+                    route = Screen.EditRecurring.route,
+                    arguments = listOf(navArgument("recurringId") { type = NavType.LongType })
+                ) { backStackEntry ->
+                    val recurringId = backStackEntry.arguments?.getLong("recurringId") ?: 0L
+                    EditRecurringScreen(
+                        recurringId = recurringId,
+                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
             }

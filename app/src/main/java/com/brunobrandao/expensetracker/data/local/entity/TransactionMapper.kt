@@ -11,7 +11,8 @@ fun TransactionEntity.toDomain(): Transaction {
         category = category,
         date = date,
         note = note,
-        createdAt = createdAt
+        createdAt = createdAt,
+        recurringId = recurringId
     )
 }
 
@@ -24,6 +25,7 @@ fun Transaction.toEntity(): TransactionEntity {
         category = category,
         date = date,
         note = note,
-        createdAt = createdAt
+        createdAt = createdAt,
+        recurringId = recurringId
     )
 }

@@ -1,7 +1,10 @@
 package com.brunobrandao.expensetracker.presentation.add
 
 import com.brunobrandao.expensetracker.domain.model.Category
+import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.TransactionType
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 data class AddTransactionUiState(
     val editingId: Long? = null,
@@ -13,7 +16,11 @@ data class AddTransactionUiState(
     val note: String = "",
     val isLoading: Boolean = false,
     val isSaved: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val repeatEnabled: Boolean = false,
+    val repeatFrequency: RecurringFrequency = RecurringFrequency.MONTHLY,
+    val repeatStartDate: Long = LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+    val recurringId: Long? = null
 ) {
     val isEditing: Boolean get() = editingId != null
 }
@@ -27,4 +34,7 @@ sealed interface AddTransactionEvent {
     data class NoteChanged(val value: String) : AddTransactionEvent
     data object Save : AddTransactionEvent
     data object DismissError : AddTransactionEvent
+    data object RepeatToggled : AddTransactionEvent
+    data class FrequencyChanged(val value: RecurringFrequency) : AddTransactionEvent
+    data class StartDateChanged(val value: Long) : AddTransactionEvent
 }

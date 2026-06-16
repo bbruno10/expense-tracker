@@ -11,4 +11,8 @@ sealed class Screen(val route: String) {
     data object Settings : Screen("settings")
     data object Login : Screen("login")
     data object Signup : Screen("signup")
+    data object Recurring : Screen("recurring")
+    data object EditRecurring : Screen("edit_recurring/{recurringId}") {
+        fun createRoute(id: Long) = "edit_recurring/$id"
+    }
 }
