@@ -5,6 +5,7 @@ import com.brunobrandao.expensetracker.data.local.entity.toDomain
 import com.brunobrandao.expensetracker.data.local.entity.toEntity
 import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
+import com.brunobrandao.expensetracker.domain.util.Clock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -12,7 +13,8 @@ import javax.inject.Singleton
 
 @Singleton
 class RecurringTransactionRepositoryImpl @Inject constructor(
-    private val dao: RecurringTransactionDao
+    private val dao: RecurringTransactionDao,
+    private val clock: Clock
 ) : RecurringTransactionRepository {
 
     override fun observeAll(): Flow<List<RecurringTransaction>> {
@@ -31,12 +33,11 @@ class RecurringTransactionRepositoryImpl @Inject constructor(
         return if (rule.id == 0L) {
             dao.insert(rule.toEntity())
         } else {
-            // Preserve sync fields so remoteId and sync state are not lost on update.
             val existing = dao.getById(rule.id)
             val entity = rule.toEntity().copy(
                 remoteId = existing?.remoteId ?: "",
                 synced = false,
-                updatedAt = System.currentTimeMillis()
+                updatedAt = clock.now()
             )
             dao.update(entity)
             rule.id
@@ -57,7 +58,7 @@ class RecurringTransactionRepositoryImpl @Inject constructor(
             existing.copy(
                 active = active,
                 synced = false,
-                updatedAt = System.currentTimeMillis()
+                updatedAt = clock.now()
             )
         )
     }
