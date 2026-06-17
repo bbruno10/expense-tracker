@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.brunobrandao.expensetracker.data.preferences.Currency
 import com.brunobrandao.expensetracker.data.preferences.ThemeMode
 import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
+import com.brunobrandao.expensetracker.domain.model.DefaultCategories
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.domain.usecase.GetTransactionsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -95,7 +96,7 @@ class SettingsViewModel @Inject constructor(
                     transactions.forEach { transaction ->
                         val date = dateFormat.format(Date(transaction.date))
                         val type = transaction.type.displayName
-                        val category = transaction.category.displayName
+                        val category = DefaultCategories.LIST.find { it.key == transaction.category }?.name ?: transaction.category
                         val description = "\"${transaction.description.replace("\"", "\"\"")}\""
                         val amount = if (transaction.type == TransactionType.EXPENSE) {
                             "-${transaction.amount}"

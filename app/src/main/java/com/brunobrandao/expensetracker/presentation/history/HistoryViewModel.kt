@@ -2,8 +2,7 @@ package com.brunobrandao.expensetracker.presentation.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.brunobrandao.expensetracker.domain.model.Category
-import com.brunobrandao.expensetracker.domain.model.TransactionType
+import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.usecase.DeleteTransactionUseCase
 import com.brunobrandao.expensetracker.domain.usecase.GetTransactionsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
     private val getTransactions: GetTransactionsUseCase,
-    private val deleteTransaction: DeleteTransactionUseCase
+    private val deleteTransaction: DeleteTransactionUseCase,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HistoryUiState())
@@ -27,6 +27,9 @@ class HistoryViewModel @Inject constructor(
 
     init {
         observeTransactions()
+        categoryRepository.observeCategories().onEach { cats ->
+            _uiState.update { it.copy(categories = cats) }
+        }.launchIn(viewModelScope)
     }
 
     private fun observeTransactions() {

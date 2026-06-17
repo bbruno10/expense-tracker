@@ -1,6 +1,5 @@
 package com.brunobrandao.expensetracker.data.local.entity
 
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import org.junit.Assert.assertEquals
@@ -13,7 +12,7 @@ class TransactionMapperTest {
         description = "Lunch",
         amount = 25.50,
         type = TransactionType.EXPENSE,
-        category = Category.FOOD,
+        category = "FOOD",
         date = 1700000000000L,
         note = "Restaurant downtown",
         createdAt = 1700000000000L
@@ -24,7 +23,7 @@ class TransactionMapperTest {
         description = "Lunch",
         amount = 25.50,
         type = TransactionType.EXPENSE,
-        category = Category.FOOD,
+        category = "FOOD",
         date = 1700000000000L,
         note = "Restaurant downtown",
         createdAt = 1700000000000L
@@ -62,8 +61,6 @@ class TransactionMapperTest {
     fun `entity to domain and back preserves data`() {
         val domain = sampleEntity.toDomain()
         val backToEntity = domain.toEntity()
-        // updatedAt é um default de relógio (System.currentTimeMillis) e não é
-        // carregado pelo domain model, então normalizamos antes de comparar.
         assertEquals(sampleEntity, backToEntity.copy(updatedAt = sampleEntity.updatedAt))
     }
 
@@ -81,7 +78,7 @@ class TransactionMapperTest {
             description = "Test",
             amount = 10.0,
             type = TransactionType.INCOME,
-            category = Category.SALARY,
+            category = "SALARY",
             date = 1700000000000L
         )
 
@@ -103,11 +100,11 @@ class TransactionMapperTest {
     }
 
     @Test
-    fun `maps all categories correctly`() {
-        Category.entries.forEach { category ->
-            val entity = sampleEntity.copy(category = category)
+    fun `maps various category keys correctly`() {
+        listOf("FOOD", "SALARY", "OTHER", "SHOPPING", "CUSTOM_KEY").forEach { key ->
+            val entity = sampleEntity.copy(category = key)
             val domain = entity.toDomain()
-            assertEquals(category, domain.category)
+            assertEquals(key, domain.category)
         }
     }
 }

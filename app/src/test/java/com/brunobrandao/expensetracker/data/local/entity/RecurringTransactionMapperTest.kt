@@ -1,6 +1,5 @@
 package com.brunobrandao.expensetracker.data.local.entity
 
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
@@ -14,7 +13,7 @@ class RecurringTransactionMapperTest {
         description = "Netflix",
         amount = 39.90,
         type = TransactionType.EXPENSE,
-        category = Category.OTHER,
+        category = "OTHER",
         note = "Streaming",
         frequency = RecurringFrequency.MONTHLY,
         startDate = 1700000000000L,
@@ -27,7 +26,7 @@ class RecurringTransactionMapperTest {
         description = "Netflix",
         amount = 39.90,
         type = TransactionType.EXPENSE,
-        category = Category.OTHER,
+        category = "OTHER",
         note = "Streaming",
         frequency = RecurringFrequency.MONTHLY,
         startDate = 1700000000000L,
@@ -71,8 +70,6 @@ class RecurringTransactionMapperTest {
     fun `entity to domain and back preserves data`() {
         val domain = sampleEntity.toDomain()
         val backToEntity = domain.toEntity()
-        // updatedAt é um default de relógio (System.currentTimeMillis) e não é
-        // carregado pelo domain model, então normalizamos antes de comparar.
         assertEquals(sampleEntity, backToEntity.copy(updatedAt = sampleEntity.updatedAt))
     }
 

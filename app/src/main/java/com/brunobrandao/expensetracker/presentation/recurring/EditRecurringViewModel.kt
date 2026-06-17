@@ -8,11 +8,14 @@ import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
+import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,7 +25,8 @@ data class EditRecurringUiState(
     val description: String = "",
     val amount: String = "",
     val type: TransactionType = TransactionType.EXPENSE,
-    val category: Category = Category.OTHER,
+    val category: String = "OTHER",
+    val categories: List<Category> = emptyList(),
     val note: String = "",
     val frequency: RecurringFrequency = RecurringFrequency.MONTHLY,
     val active: Boolean = true,
@@ -39,7 +43,7 @@ sealed interface EditRecurringEvent {
     data class DescriptionChanged(val value: String) : EditRecurringEvent
     data class AmountChanged(val value: String) : EditRecurringEvent
     data class TypeChanged(val value: TransactionType) : EditRecurringEvent
-    data class CategoryChanged(val value: Category) : EditRecurringEvent
+    data class CategoryChanged(val value: String) : EditRecurringEvent
     data class NoteChanged(val value: String) : EditRecurringEvent
     data class FrequencyChanged(val value: RecurringFrequency) : EditRecurringEvent
     data class ActiveChanged(val value: Boolean) : EditRecurringEvent
@@ -53,11 +57,18 @@ sealed interface EditRecurringEvent {
 class EditRecurringViewModel @Inject constructor(
     private val recurringRepository: RecurringTransactionRepository,
     private val syncRepository: SyncRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EditRecurringUiState())
     val uiState: StateFlow<EditRecurringUiState> = _uiState.asStateFlow()
+
+    init {
+        categoryRepository.observeCategories().onEach { cats ->
+            _uiState.update { it.copy(categories = cats) }
+        }.launchIn(viewModelScope)
+    }
 
     fun load(recurringId: Long) {
         if (recurringId <= 0L) {

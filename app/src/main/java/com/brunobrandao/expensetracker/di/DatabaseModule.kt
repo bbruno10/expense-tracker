@@ -3,12 +3,15 @@ package com.brunobrandao.expensetracker.di
 import android.content.Context
 import androidx.room.Room
 import com.brunobrandao.expensetracker.data.local.AppDatabase
+import com.brunobrandao.expensetracker.data.local.dao.CategoryDao
 import com.brunobrandao.expensetracker.data.local.dao.RecurringTransactionDao
 import com.brunobrandao.expensetracker.data.local.dao.TransactionDao
 import com.brunobrandao.expensetracker.data.repository.AuthRepositoryImpl
+import com.brunobrandao.expensetracker.data.repository.CategoryRepositoryImpl
 import com.brunobrandao.expensetracker.data.repository.RecurringTransactionRepositoryImpl
 import com.brunobrandao.expensetracker.data.repository.TransactionRepositoryImpl
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
+import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
 import dagger.Binds
@@ -33,7 +36,11 @@ object DatabaseModule {
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
         )
-            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
+            .addMigrations(
+                AppDatabase.MIGRATION_1_2,
+                AppDatabase.MIGRATION_2_3,
+                AppDatabase.MIGRATION_3_4
+            )
             .build()
     }
 
@@ -47,6 +54,12 @@ object DatabaseModule {
     @Singleton
     fun provideRecurringTransactionDao(database: AppDatabase): RecurringTransactionDao {
         return database.recurringTransactionDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCategoryDao(database: AppDatabase): CategoryDao {
+        return database.categoryDao()
     }
 }
 
@@ -71,4 +84,10 @@ abstract class RepositoryModule {
     abstract fun bindRecurringTransactionRepository(
         impl: RecurringTransactionRepositoryImpl
     ): RecurringTransactionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCategoryRepository(
+        impl: CategoryRepositoryImpl
+    ): CategoryRepository
 }

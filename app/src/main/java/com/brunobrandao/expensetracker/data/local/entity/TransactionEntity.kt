@@ -2,7 +2,6 @@ package com.brunobrandao.expensetracker.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 
 @Entity(tableName = "transactions")
@@ -12,7 +11,7 @@ data class TransactionEntity(
     val description: String,
     val amount: Double,
     val type: TransactionType,
-    val category: Category,
+    val category: String,
     val date: Long,
     val note: String = "",
     val createdAt: Long = System.currentTimeMillis(),

@@ -7,7 +7,6 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.brunobrandao.expensetracker.data.local.entity.TransactionEntity
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import kotlinx.coroutines.flow.Flow
 
@@ -36,7 +35,7 @@ interface TransactionDao {
     fun getTransactionsByType(type: TransactionType): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM transactions WHERE category = :category ORDER BY date DESC")
-    fun getTransactionsByCategory(category: Category): Flow<List<TransactionEntity>>
+    fun getTransactionsByCategory(category: String): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM transactions WHERE date BETWEEN :startDate AND :endDate ORDER BY date DESC")
     fun getTransactionsByDateRange(startDate: Long, endDate: Long): Flow<List<TransactionEntity>>

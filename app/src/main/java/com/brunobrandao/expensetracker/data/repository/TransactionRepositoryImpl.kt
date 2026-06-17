@@ -3,7 +3,6 @@ package com.brunobrandao.expensetracker.data.repository
 import com.brunobrandao.expensetracker.data.local.dao.TransactionDao
 import com.brunobrandao.expensetracker.data.local.entity.toDomain
 import com.brunobrandao.expensetracker.data.local.entity.toEntity
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
@@ -33,7 +32,7 @@ class TransactionRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getTransactionsByCategory(category: Category): Flow<List<Transaction>> {
+    override fun getTransactionsByCategory(category: String): Flow<List<Transaction>> {
         return dao.getTransactionsByCategory(category).map { entities ->
             entities.map { it.toDomain() }
         }
@@ -80,7 +79,6 @@ class TransactionRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateTransaction(transaction: Transaction) {
-        // Preserve existing sync fields so remoteId and sync state are not lost on edit.
         val existing = dao.getTransactionById(transaction.id)
         val entity = transaction.toEntity().copy(
             remoteId = existing?.remoteId ?: "",

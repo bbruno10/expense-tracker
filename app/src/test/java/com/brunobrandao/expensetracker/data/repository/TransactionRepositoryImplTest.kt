@@ -2,7 +2,6 @@ package com.brunobrandao.expensetracker.data.repository
 
 import com.brunobrandao.expensetracker.data.local.dao.TransactionDao
 import com.brunobrandao.expensetracker.data.local.entity.TransactionEntity
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import io.mockk.coEvery
@@ -27,7 +26,7 @@ class TransactionRepositoryImplTest {
         description = "Lunch",
         amount = 25.50,
         type = TransactionType.EXPENSE,
-        category = Category.FOOD,
+        category = "FOOD",
         date = 1700000000000L,
         note = "Downtown restaurant",
         createdAt = 1700000000000L
@@ -51,7 +50,7 @@ class TransactionRepositoryImplTest {
         assertEquals("Lunch", result[0].description)
         assertEquals(25.50, result[0].amount, 0.001)
         assertEquals(TransactionType.EXPENSE, result[0].type)
-        assertEquals(Category.FOOD, result[0].category)
+        assertEquals("FOOD", result[0].category)
     }
 
     @Test
@@ -142,7 +141,7 @@ class TransactionRepositoryImplTest {
             description = "Lunch",
             amount = 25.50,
             type = TransactionType.EXPENSE,
-            category = Category.FOOD,
+            category = "FOOD",
             date = 1700000000000L
         )
 

@@ -63,7 +63,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import java.text.SimpleDateFormat
@@ -321,13 +320,13 @@ fun AddTransactionScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Category.entries.forEach { category ->
+                state.categories.forEach { category ->
                     FilterChip(
-                        selected = state.category == category,
+                        selected = state.category == category.key,
                         onClick = {
-                            viewModel.onEvent(AddTransactionEvent.CategoryChanged(category))
+                            viewModel.onEvent(AddTransactionEvent.CategoryChanged(category.key))
                         },
-                        label = { Text("${category.icon} ${category.displayName}") },
+                        label = { Text("${category.icon} ${category.name}") },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = GreenPrimary.copy(alpha = 0.15f),
                             selectedLabelColor = GreenPrimary

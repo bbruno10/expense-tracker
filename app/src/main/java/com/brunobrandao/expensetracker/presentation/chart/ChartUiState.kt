@@ -4,7 +4,8 @@ import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.presentation.home.TimePeriod
 
 data class ChartUiState(
-    val expensesByCategory: Map<Category, Double> = emptyMap(),
+    val expensesByCategory: Map<String, Double> = emptyMap(),
+    val categoriesMap: Map<String, Category> = emptyMap(),
     val totalExpenses: Double = 0.0,
     val totalIncome: Double = 0.0,
     val selectedPeriod: TimePeriod = TimePeriod.MONTHLY,

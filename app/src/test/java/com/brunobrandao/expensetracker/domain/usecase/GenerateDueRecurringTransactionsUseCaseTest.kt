@@ -1,6 +1,5 @@
 package com.brunobrandao.expensetracker.domain.usecase
 
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
 import com.brunobrandao.expensetracker.domain.model.Transaction
@@ -74,7 +73,7 @@ class FakeTransactionRepository : TransactionRepository {
     override fun getAllTransactions(): Flow<List<Transaction>> = flowOf(emptyList())
     override suspend fun getTransactionById(id: Long): Transaction? = null
     override fun getTransactionsByType(type: TransactionType): Flow<List<Transaction>> = flowOf(emptyList())
-    override fun getTransactionsByCategory(category: Category): Flow<List<Transaction>> = flowOf(emptyList())
+    override fun getTransactionsByCategory(category: String): Flow<List<Transaction>> = flowOf(emptyList())
     override fun getTransactionsByDateRange(startDate: Long, endDate: Long): Flow<List<Transaction>> = flowOf(emptyList())
     override fun getTransactionsByTypeAndDateRange(type: TransactionType, startDate: Long, endDate: Long): Flow<List<Transaction>> = flowOf(emptyList())
     override fun getTotalByType(type: TransactionType): Flow<Double> = flowOf(0.0)
@@ -125,7 +124,7 @@ class GenerateDueRecurringTransactionsUseCaseTest {
         description = "Netflix",
         amount = 39.90,
         type = TransactionType.EXPENSE,
-        category = Category.OTHER,
+        category = "OTHER",
         note = "Streaming",
         frequency = frequency,
         startDate = nextDueDate,
@@ -202,7 +201,7 @@ class GenerateDueRecurringTransactionsUseCaseTest {
         assertEquals("Netflix", tx.description)
         assertEquals(39.90, tx.amount, 0.001)
         assertEquals(TransactionType.EXPENSE, tx.type)
-        assertEquals(Category.OTHER, tx.category)
+        assertEquals("OTHER", tx.category)
         assertEquals("Streaming", tx.note)
         assertEquals(jan1_2024, tx.date)
         assertEquals(42L, tx.recurringId)

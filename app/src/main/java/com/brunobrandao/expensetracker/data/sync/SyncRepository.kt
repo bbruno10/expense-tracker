@@ -4,7 +4,6 @@ import com.brunobrandao.expensetracker.data.local.dao.RecurringTransactionDao
 import com.brunobrandao.expensetracker.data.local.dao.TransactionDao
 import com.brunobrandao.expensetracker.data.local.entity.RecurringTransactionEntity
 import com.brunobrandao.expensetracker.data.local.entity.TransactionEntity
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
@@ -202,7 +201,7 @@ class SyncRepository @Inject constructor(
             "description" to entity.description,
             "amount" to entity.amount,
             "type" to entity.type.name,
-            "category" to entity.category.name,
+            "category" to entity.category,
             "date" to entity.date,
             "note" to entity.note,
             "createdAt" to entity.createdAt,
@@ -222,7 +221,7 @@ class SyncRepository @Inject constructor(
             "description" to entity.description,
             "amount" to entity.amount,
             "type" to entity.type.name,
-            "category" to entity.category.name,
+            "category" to entity.category,
             "note" to entity.note,
             "frequency" to entity.frequency.name,
             "startDate" to entity.startDate,
@@ -302,7 +301,7 @@ class SyncRepository @Inject constructor(
                 description = getString("description") ?: return null,
                 amount = getDouble("amount") ?: return null,
                 type = TransactionType.valueOf(getString("type") ?: return null),
-                category = Category.valueOf(getString("category") ?: return null),
+                category = getString("category") ?: "OTHER",
                 date = getLong("date") ?: return null,
                 note = getString("note") ?: "",
                 createdAt = getLong("createdAt") ?: System.currentTimeMillis(),
@@ -323,7 +322,7 @@ class SyncRepository @Inject constructor(
                 description = getString("description") ?: return null,
                 amount = getDouble("amount") ?: return null,
                 type = TransactionType.valueOf(getString("type") ?: return null),
-                category = Category.valueOf(getString("category") ?: return null),
+                category = getString("category") ?: "OTHER",
                 note = getString("note") ?: "",
                 frequency = RecurringFrequency.valueOf(getString("frequency") ?: return null),
                 startDate = getLong("startDate") ?: return null,

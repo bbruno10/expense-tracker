@@ -3,6 +3,7 @@ package com.brunobrandao.expensetracker.presentation.chart
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.brunobrandao.expensetracker.domain.model.TransactionType
+import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.usecase.GetTotalByTypeUseCase
 import com.brunobrandao.expensetracker.domain.usecase.GetTransactionsByDateRangeUseCase
 import com.brunobrandao.expensetracker.presentation.home.HomeViewModel
@@ -20,7 +21,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ChartViewModel @Inject constructor(
     private val getTransactionsByDateRange: GetTransactionsByDateRangeUseCase,
-    private val getTotalByType: GetTotalByTypeUseCase
+    private val getTotalByType: GetTotalByTypeUseCase,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChartUiState())
@@ -62,8 +64,9 @@ class ChartViewModel @Inject constructor(
             combine(
                 getTransactionsByDateRange(start, end),
                 getTotalByType.byDateRange(TransactionType.EXPENSE, start, end),
-                getTotalByType.byDateRange(TransactionType.INCOME, start, end)
-            ) { transactions, totalExpenses, totalIncome ->
+                getTotalByType.byDateRange(TransactionType.INCOME, start, end),
+                categoryRepository.observeCategories()
+            ) { transactions, totalExpenses, totalIncome, categories ->
 
                 val expensesByCategory = transactions
                     .filter { it.type == TransactionType.EXPENSE }
@@ -75,6 +78,7 @@ class ChartViewModel @Inject constructor(
 
                 ChartUiState(
                     expensesByCategory = expensesByCategory,
+                    categoriesMap = categories.associateBy { it.key },
                     totalExpenses = totalExpenses,
                     totalIncome = totalIncome,
                     selectedPeriod = period,
