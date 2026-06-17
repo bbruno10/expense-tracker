@@ -64,6 +64,11 @@ android {
     buildFeatures {
         compose = true
     }
+    sourceSets {
+        getByName("androidTest") {
+            assets.srcDirs(files("$projectDir/schemas"))
+        }
+    }
 }
 
 ksp {
@@ -91,6 +96,7 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+    androidTestImplementation(libs.room.testing)
 
     // Hilt
     implementation(libs.hilt.android)
