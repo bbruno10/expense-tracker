@@ -6,6 +6,7 @@ import com.brunobrandao.expensetracker.data.local.entity.toEntity
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
+import com.brunobrandao.expensetracker.domain.util.Clock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -13,7 +14,8 @@ import javax.inject.Singleton
 
 @Singleton
 class TransactionRepositoryImpl @Inject constructor(
-    private val dao: TransactionDao
+    private val dao: TransactionDao,
+    private val clock: Clock
 ) : TransactionRepository {
 
     override fun getAllTransactions(): Flow<List<Transaction>> {
@@ -83,7 +85,7 @@ class TransactionRepositoryImpl @Inject constructor(
         val entity = transaction.toEntity().copy(
             remoteId = existing?.remoteId ?: "",
             synced = false,
-            updatedAt = System.currentTimeMillis()
+            updatedAt = clock.now()
         )
         dao.update(entity)
     }

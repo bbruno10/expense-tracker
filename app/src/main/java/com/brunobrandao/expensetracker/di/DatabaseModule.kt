@@ -14,6 +14,7 @@ import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
+import com.brunobrandao.expensetracker.domain.util.Clock
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -61,6 +62,10 @@ object DatabaseModule {
     fun provideCategoryDao(database: AppDatabase): CategoryDao {
         return database.categoryDao()
     }
+
+    @Provides
+    @Singleton
+    fun provideClock(): Clock = Clock { System.currentTimeMillis() }
 }
 
 @Module

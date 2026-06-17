@@ -4,6 +4,7 @@ import com.brunobrandao.expensetracker.data.local.dao.TransactionDao
 import com.brunobrandao.expensetracker.data.local.entity.TransactionEntity
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
+import com.brunobrandao.expensetracker.domain.util.Clock
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -17,6 +18,9 @@ import org.junit.Before
 import org.junit.Test
 
 class TransactionRepositoryImplTest {
+
+    private val fakeNow = 1717200000000L
+    private val fakeClock = Clock { fakeNow }
 
     private lateinit var dao: TransactionDao
     private lateinit var repository: TransactionRepositoryImpl
@@ -35,7 +39,7 @@ class TransactionRepositoryImplTest {
     @Before
     fun setup() {
         dao = mockk(relaxed = true)
-        repository = TransactionRepositoryImpl(dao)
+        repository = TransactionRepositoryImpl(dao, fakeClock)
     }
 
     // ---- getAllTransactions ----
@@ -158,5 +162,92 @@ class TransactionRepositoryImplTest {
         repository.deleteTransactionById(1L)
 
         coVerify { dao.deleteById(1L) }
+    }
+
+    // ---- updateTransaction — sync field preservation ----
+
+    @Test
+    fun `updateTransaction preserves remoteId and marks unsynced with clock timestamp`() = runTest {
+        val existingEntity = TransactionEntity(
+            id = 5L,
+            description = "Old description",
+            amount = 100.0,
+            type = TransactionType.EXPENSE,
+            category = "FOOD",
+            date = 1700000000000L,
+            createdAt = 1700000000000L,
+            remoteId = "abc123",
+            synced = true,
+            updatedAt = 1700000000000L
+        )
+        coEvery { dao.getTransactionById(5L) } returns existingEntity
+
+        val updatedDomain = Transaction(
+            id = 5L,
+            description = "New description",
+            amount = 150.0,
+            type = TransactionType.EXPENSE,
+            category = "SHOPPING",
+            date = 1700000000000L
+        )
+
+        repository.updateTransaction(updatedDomain)
+
+        coVerify {
+            dao.update(match { entity ->
+                entity.id == 5L &&
+                entity.description == "New description" &&
+                entity.amount == 150.0 &&
+                entity.category == "SHOPPING" &&
+                entity.remoteId == "abc123" &&   // preservado do entity existente
+                entity.synced == false &&         // marcado para re-sync
+                entity.updatedAt == fakeNow       // via clock injetável, não System.currentTimeMillis()
+            })
+        }
+    }
+
+    @Test
+    fun `updateTransaction with already-synced entity resets synced flag`() = runTest {
+        val existingEntity = TransactionEntity(
+            id = 7L,
+            description = "Groceries",
+            amount = 80.0,
+            type = TransactionType.EXPENSE,
+            category = "FOOD",
+            date = 1700000000000L,
+            createdAt = 1700000000000L,
+            remoteId = "xyz789",
+            synced = true,
+            updatedAt = 1700000000000L
+        )
+        coEvery { dao.getTransactionById(7L) } returns existingEntity
+
+        repository.updateTransaction(
+            Transaction(id = 7L, description = "Groceries updated", amount = 90.0,
+                type = TransactionType.EXPENSE, category = "FOOD", date = 1700000000000L)
+        )
+
+        coVerify {
+            dao.update(match { entity ->
+                entity.synced == false && entity.remoteId == "xyz789" && entity.updatedAt == fakeNow
+            })
+        }
+    }
+
+    @Test
+    fun `updateTransaction when existing not found uses empty remoteId`() = runTest {
+        // edge case: entity sumiu do DB entre query e update
+        coEvery { dao.getTransactionById(99L) } returns null
+
+        repository.updateTransaction(
+            Transaction(id = 99L, description = "Ghost", amount = 10.0,
+                type = TransactionType.EXPENSE, category = "OTHER", date = 1700000000000L)
+        )
+
+        coVerify {
+            dao.update(match { entity ->
+                entity.remoteId == "" && entity.synced == false && entity.updatedAt == fakeNow
+            })
+        }
     }
 }
