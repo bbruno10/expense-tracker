@@ -57,6 +57,8 @@ import androidx.compose.ui.res.stringResource
 import com.brunobrandao.expensetracker.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.brunobrandao.expensetracker.domain.model.Category
+import com.brunobrandao.expensetracker.domain.model.DefaultCategories
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.presentation.util.CurrencyFormatter
@@ -92,6 +94,7 @@ fun HomeScreen(
     detailTransaction?.let { transaction ->
         TransactionDetailDialog(
             transaction = transaction,
+            categoriesMap = state.categoriesMap,
             onDismiss = { detailTransaction = null }
         )
     }
@@ -295,6 +298,7 @@ fun HomeScreen(
                 items(state.recentTransactions, key = { it.id }) { transaction ->
                     TransactionItem(
                         transaction = transaction,
+                        categoriesMap = state.categoriesMap,
                         onClick = { detailTransaction = transaction },
                         onLongClick = { selectedTransaction = transaction }
                     )
@@ -504,9 +508,11 @@ private fun BalanceCard(
 @Composable
 fun TransactionItem(
     transaction: Transaction,
+    categoriesMap: Map<String, Category> = emptyMap(),
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null
 ) {
+    val category = categoriesMap[transaction.category] ?: DefaultCategories.fallback(transaction.category)
     val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy") }
     Card(
         modifier = Modifier
@@ -548,7 +554,7 @@ fun TransactionItem(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = transaction.category.icon,
+                        text = category.icon,
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -574,7 +580,7 @@ fun TransactionItem(
                         }
                     }
                     Text(
-                        text = "${transaction.category.displayName} • ${Instant.ofEpochMilli(transaction.date).atZone(ZoneId.systemDefault()).toLocalDate().format(formatter)}",
+                        text = "${category.name} • ${Instant.ofEpochMilli(transaction.date).atZone(ZoneId.systemDefault()).toLocalDate().format(formatter)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -593,8 +599,10 @@ fun TransactionItem(
 @Composable
 fun TransactionDetailDialog(
     transaction: Transaction,
+    categoriesMap: Map<String, Category> = emptyMap(),
     onDismiss: () -> Unit
 ) {
+    val category = categoriesMap[transaction.category] ?: DefaultCategories.fallback(transaction.category)
     val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy") }
     val dateStr = Instant.ofEpochMilli(transaction.date)
         .atZone(ZoneId.systemDefault())
@@ -609,7 +617,7 @@ fun TransactionDetailDialog(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(transaction.category.icon, style = MaterialTheme.typography.titleLarge)
+                Text(category.icon, style = MaterialTheme.typography.titleLarge)
                 Text(transaction.description, fontWeight = FontWeight.Bold)
             }
         },
@@ -621,7 +629,7 @@ fun TransactionDetailDialog(
                     fontWeight = FontWeight.Bold,
                     color = if (isIncome) IncomeGreen else ExpenseRed
                 )
-                DetailRow(label = "Category", value = "${transaction.category.icon} ${transaction.category.displayName}")
+                DetailRow(label = "Category", value = "${category.icon} ${category.name}")
                 DetailRow(label = "Date", value = dateStr)
                 DetailRow(label = "Type", value = if (isIncome) "Income" else "Expense")
                 if (transaction.note.isNotBlank()) {

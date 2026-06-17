@@ -11,7 +11,8 @@ data class AddTransactionUiState(
     val description: String = "",
     val amount: String = "",
     val type: TransactionType = TransactionType.EXPENSE,
-    val category: Category = Category.OTHER,
+    val category: String = "OTHER",
+    val categories: List<Category> = emptyList(),
     val date: Long = System.currentTimeMillis(),
     val note: String = "",
     val isLoading: Boolean = false,
@@ -29,7 +30,7 @@ sealed interface AddTransactionEvent {
     data class DescriptionChanged(val value: String) : AddTransactionEvent
     data class AmountChanged(val value: String) : AddTransactionEvent
     data class TypeChanged(val value: TransactionType) : AddTransactionEvent
-    data class CategoryChanged(val value: Category) : AddTransactionEvent
+    data class CategoryChanged(val value: String) : AddTransactionEvent
     data class DateChanged(val value: Long) : AddTransactionEvent
     data class NoteChanged(val value: String) : AddTransactionEvent
     data object Save : AddTransactionEvent

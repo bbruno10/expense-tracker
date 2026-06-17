@@ -50,6 +50,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brunobrandao.expensetracker.R
 import com.brunobrandao.expensetracker.domain.model.Category
+import com.brunobrandao.expensetracker.domain.model.DefaultCategories
 import com.brunobrandao.expensetracker.presentation.home.PeriodNavigator
 import com.brunobrandao.expensetracker.presentation.home.TimePeriod
 import com.brunobrandao.expensetracker.presentation.util.CurrencyFormatter
@@ -159,6 +160,7 @@ fun ChartScreen(
                         Spacer(modifier = Modifier.height(12.dp))
                         DonutWithLegend(
                             expensesByCategory = state.expensesByCategory,
+                            categoriesMap = state.categoriesMap,
                             totalExpenses = state.totalExpenses
                         )
                     }
@@ -183,9 +185,9 @@ fun ChartScreen(
 
                         val maxAmount = state.expensesByCategory.values.maxOrNull() ?: 1.0
 
-                        state.expensesByCategory.forEach { (category, amount) ->
+                        state.expensesByCategory.forEach { (key, amount) ->
                             BarChartRow(
-                                category = category,
+                                category = state.categoriesMap[key] ?: DefaultCategories.fallback(key),
                                 amount = amount,
                                 maxAmount = maxAmount
                             )
@@ -226,7 +228,8 @@ fun ChartScreen(
 
 @Composable
 private fun DonutWithLegend(
-    expensesByCategory: Map<Category, Double>,
+    expensesByCategory: Map<String, Double>,
+    categoriesMap: Map<String, Category>,
     totalExpenses: Double
 ) {
     var animationPlayed by remember { mutableStateOf(false) }
@@ -255,7 +258,8 @@ private fun DonutWithLegend(
                 )
                 var startAngle = -90f
 
-                expensesByCategory.forEach { (category, amount) ->
+                expensesByCategory.forEach { (key, amount) ->
+                    val category = categoriesMap[key] ?: DefaultCategories.fallback(key)
                     val sweepAngle = (amount / totalExpenses * 360f).toFloat() * animationProgress
                     drawArc(
                         color = category.color,
@@ -291,7 +295,8 @@ private fun DonutWithLegend(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
-            expensesByCategory.forEach { (category, amount) ->
+            expensesByCategory.forEach { (key, amount) ->
+                val category = categoriesMap[key] ?: DefaultCategories.fallback(key)
                 val percentage = if (totalExpenses > 0) (amount / totalExpenses * 100).toInt() else 0
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -305,7 +310,7 @@ private fun DonutWithLegend(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = category.displayName,
+                        text = category.name,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f)
@@ -334,7 +339,7 @@ private fun BarChartRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = if (category.displayName.length > 6) category.displayName.take(5) + "." else category.displayName,
+            text = if (category.name.length > 6) category.name.take(5) + "." else category.name,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(50.dp),

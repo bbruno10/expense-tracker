@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
+import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.usecase.DeleteTransactionUseCase
 import com.brunobrandao.expensetracker.domain.usecase.GetBalanceUseCase
 import com.brunobrandao.expensetracker.domain.usecase.GetTotalByTypeUseCase
@@ -30,7 +31,8 @@ class HomeViewModel @Inject constructor(
     private val getTotalByType: GetTotalByTypeUseCase,
     private val deleteTransaction: DeleteTransactionUseCase,
     private val authRepository: AuthRepository,
-    private val syncRepository: SyncRepository
+    private val syncRepository: SyncRepository,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -67,7 +69,6 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             val userId = authRepository.currentUserId
             if (userId != null) {
-                // syncDelete handles both the local delete and the Firestore delete
                 syncRepository.syncDelete(id, userId)
             } else {
                 deleteTransaction(id)
@@ -85,13 +86,15 @@ class HomeViewModel @Inject constructor(
                 getBalance.byDateRange(start, end),
                 getTotalByType.byDateRange(TransactionType.INCOME, start, end),
                 getTotalByType.byDateRange(TransactionType.EXPENSE, start, end),
-                getTransactionsByDateRange(start, end)
-            ) { balance, income, expense, transactions ->
+                getTransactionsByDateRange(start, end),
+                categoryRepository.observeCategories()
+            ) { balance, income, expense, transactions, categories ->
                 HomeUiState(
                     balance = balance,
                     totalIncome = income,
                     totalExpense = expense,
                     recentTransactions = transactions.take(10),
+                    categoriesMap = categories.associateBy { it.key },
                     selectedPeriod = period,
                     periodOffset = offset,
                     periodLabel = label,

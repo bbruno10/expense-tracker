@@ -1,6 +1,5 @@
 package com.brunobrandao.expensetracker.domain.repository
 
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +12,7 @@ interface TransactionRepository {
 
     fun getTransactionsByType(type: TransactionType): Flow<List<Transaction>>
 
-    fun getTransactionsByCategory(category: Category): Flow<List<Transaction>>
+    fun getTransactionsByCategory(category: String): Flow<List<Transaction>>
 
     fun getTransactionsByDateRange(startDate: Long, endDate: Long): Flow<List<Transaction>>
 

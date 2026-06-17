@@ -1,6 +1,5 @@
 package com.brunobrandao.expensetracker.data.local
 
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -44,28 +43,5 @@ class ConvertersTest {
     @Test(expected = IllegalArgumentException::class)
     fun `toTransactionType throws exception for invalid value`() {
         converters.toTransactionType("INVALID")
-    }
-
-    // ---- Category ----
-
-    @Test
-    fun `fromCategory converts each category to its name`() {
-        Category.entries.forEach { category ->
-            val result = converters.fromCategory(category)
-            assertEquals(category.name, result)
-        }
-    }
-
-    @Test
-    fun `toCategory converts each name back to category`() {
-        Category.entries.forEach { category ->
-            val result = converters.toCategory(category.name)
-            assertEquals(category, result)
-        }
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun `toCategory throws exception for invalid value`() {
-        converters.toCategory("NONEXISTENT")
     }
 }

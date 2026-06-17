@@ -1,20 +1,22 @@
 package com.brunobrandao.expensetracker.presentation.add
 
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
+import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
 import com.brunobrandao.expensetracker.domain.usecase.AddTransactionUseCase
 import com.brunobrandao.expensetracker.domain.usecase.GenerateDueRecurringTransactionsUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -38,6 +40,7 @@ class AddTransactionViewModelTest {
     private lateinit var syncRepository: SyncRepository
     private lateinit var recurringRepository: RecurringTransactionRepository
     private lateinit var generateDue: GenerateDueRecurringTransactionsUseCase
+    private lateinit var categoryRepository: CategoryRepository
     private lateinit var viewModel: AddTransactionViewModel
 
     @Before
@@ -49,9 +52,11 @@ class AddTransactionViewModelTest {
         syncRepository = mockk(relaxed = true)
         recurringRepository = mockk(relaxed = true)
         generateDue = mockk(relaxed = true)
+        categoryRepository = mockk(relaxed = true)
+        every { categoryRepository.observeCategories() } returns flowOf(emptyList())
         viewModel = AddTransactionViewModel(
             addTransactionUseCase, repository, authRepository, syncRepository,
-            recurringRepository, generateDue
+            recurringRepository, generateDue, categoryRepository
         )
     }
 
@@ -69,7 +74,7 @@ class AddTransactionViewModelTest {
         assertEquals("", state.description)
         assertEquals("", state.amount)
         assertEquals(TransactionType.EXPENSE, state.type)
-        assertEquals(Category.OTHER, state.category)
+        assertEquals("OTHER", state.category)
         assertEquals("", state.note)
         assertFalse(state.isLoading)
         assertFalse(state.isSaved)
@@ -123,10 +128,10 @@ class AddTransactionViewModelTest {
     }
 
     @Test
-    fun `CategoryChanged updates category`() {
-        viewModel.onEvent(AddTransactionEvent.CategoryChanged(Category.FOOD))
+    fun `CategoryChanged updates category key`() {
+        viewModel.onEvent(AddTransactionEvent.CategoryChanged("FOOD"))
 
-        assertEquals(Category.FOOD, viewModel.uiState.value.category)
+        assertEquals("FOOD", viewModel.uiState.value.category)
     }
 
     @Test
@@ -146,13 +151,10 @@ class AddTransactionViewModelTest {
 
     @Test
     fun `DismissError clears error message`() {
-        // Trigger an error first
         viewModel.onEvent(AddTransactionEvent.Save)
 
-        // Verify error exists
         assertTrue(viewModel.uiState.value.errorMessage != null)
 
-        // Dismiss it
         viewModel.onEvent(AddTransactionEvent.DismissError)
         assertNull(viewModel.uiState.value.errorMessage)
     }
@@ -200,7 +202,6 @@ class AddTransactionViewModelTest {
         viewModel.onEvent(AddTransactionEvent.AmountChanged("abc"))
         viewModel.onEvent(AddTransactionEvent.Save)
 
-        // After filtering, "abc" becomes "" which is not a valid double
         assertEquals("Please enter a valid amount", viewModel.uiState.value.errorMessage)
     }
 
@@ -212,7 +213,7 @@ class AddTransactionViewModelTest {
 
         viewModel.onEvent(AddTransactionEvent.DescriptionChanged("Lunch"))
         viewModel.onEvent(AddTransactionEvent.AmountChanged("25.50"))
-        viewModel.onEvent(AddTransactionEvent.CategoryChanged(Category.FOOD))
+        viewModel.onEvent(AddTransactionEvent.CategoryChanged("FOOD"))
         viewModel.onEvent(AddTransactionEvent.Save)
 
         advanceUntilIdle()
@@ -249,7 +250,7 @@ class AddTransactionViewModelTest {
             description = "Groceries",
             amount = 42.0,
             type = TransactionType.EXPENSE,
-            category = Category.SHOPPING,
+            category = "SHOPPING",
             date = 1700000000000L,
             note = "Weekly groceries"
         )
@@ -264,7 +265,7 @@ class AddTransactionViewModelTest {
         assertEquals("Groceries", state.description)
         assertEquals("42.0", state.amount)
         assertEquals(TransactionType.EXPENSE, state.type)
-        assertEquals(Category.SHOPPING, state.category)
+        assertEquals("SHOPPING", state.category)
         assertEquals("Weekly groceries", state.note)
         assertTrue(state.isEditing)
     }
@@ -295,7 +296,7 @@ class AddTransactionViewModelTest {
             description = "Groceries",
             amount = 42.0,
             type = TransactionType.EXPENSE,
-            category = Category.SHOPPING,
+            category = "SHOPPING",
             date = 1700000000000L,
             note = ""
         )
@@ -322,7 +323,7 @@ class AddTransactionViewModelTest {
             description = "Netflix",
             amount = 39.90,
             type = TransactionType.EXPENSE,
-            category = Category.OTHER,
+            category = "OTHER",
             date = 1700000000000L,
             note = "",
             recurringId = 3L
@@ -343,7 +344,7 @@ class AddTransactionViewModelTest {
             description = "Netflix",
             amount = 39.90,
             type = TransactionType.EXPENSE,
-            category = Category.OTHER,
+            category = "OTHER",
             date = 1700000000000L,
             note = "",
             recurringId = 3L
@@ -376,7 +377,7 @@ class AddTransactionViewModelTest {
         viewModel.onEvent(AddTransactionEvent.DescriptionChanged("Netflix"))
         viewModel.onEvent(AddTransactionEvent.AmountChanged("39.90"))
         viewModel.onEvent(AddTransactionEvent.TypeChanged(TransactionType.EXPENSE))
-        viewModel.onEvent(AddTransactionEvent.CategoryChanged(Category.OTHER))
+        viewModel.onEvent(AddTransactionEvent.CategoryChanged("OTHER"))
         viewModel.onEvent(AddTransactionEvent.FrequencyChanged(RecurringFrequency.MONTHLY))
         viewModel.onEvent(AddTransactionEvent.StartDateChanged(startDate))
         viewModel.onEvent(AddTransactionEvent.Save)
@@ -402,7 +403,6 @@ class AddTransactionViewModelTest {
     fun `Repeat OFF save creates single transaction not recurring rule`() = runTest {
         coEvery { addTransactionUseCase(any()) } returns 1L
 
-        // repeatEnabled defaults to false
         viewModel.onEvent(AddTransactionEvent.DescriptionChanged("Lunch"))
         viewModel.onEvent(AddTransactionEvent.AmountChanged("25.00"))
         viewModel.onEvent(AddTransactionEvent.Save)

@@ -1,6 +1,5 @@
 package com.brunobrandao.expensetracker.presentation.add
 
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -18,7 +17,7 @@ class AddTransactionUiStateTest {
         assertEquals("", state.description)
         assertEquals("", state.amount)
         assertEquals(TransactionType.EXPENSE, state.type)
-        assertEquals(Category.OTHER, state.category)
+        assertEquals("OTHER", state.category)
         assertEquals("", state.note)
         assertFalse(state.isLoading)
         assertFalse(state.isSaved)

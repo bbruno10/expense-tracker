@@ -1,11 +1,11 @@
 package com.brunobrandao.expensetracker.presentation.recurring
 
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
+import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -13,6 +13,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -32,9 +33,9 @@ class EditRecurringViewModelTest {
     private lateinit var recurringRepository: RecurringTransactionRepository
     private lateinit var syncRepository: SyncRepository
     private lateinit var authRepository: AuthRepository
+    private lateinit var categoryRepository: CategoryRepository
     private lateinit var viewModel: EditRecurringViewModel
 
-    // Datas fixas — sem System.currentTimeMillis() em nenhum assert.
     private val startDate = 1700000000000L
     private val nextDue  = 1702678400000L
 
@@ -43,7 +44,7 @@ class EditRecurringViewModelTest {
         description = "Netflix",
         amount = 39.90,
         type = TransactionType.EXPENSE,
-        category = Category.OTHER,
+        category = "OTHER",
         note = "Streaming",
         frequency = RecurringFrequency.MONTHLY,
         startDate = startDate,
@@ -57,8 +58,10 @@ class EditRecurringViewModelTest {
         recurringRepository = mockk(relaxed = true)
         syncRepository = mockk(relaxed = true)
         authRepository = mockk(relaxed = true)
+        categoryRepository = mockk(relaxed = true)
         every { authRepository.currentUserId } returns null
-        viewModel = EditRecurringViewModel(recurringRepository, syncRepository, authRepository)
+        every { categoryRepository.observeCategories() } returns flowOf(emptyList())
+        viewModel = EditRecurringViewModel(recurringRepository, syncRepository, authRepository, categoryRepository)
     }
 
     @After
@@ -78,7 +81,7 @@ class EditRecurringViewModelTest {
         assertEquals("Netflix", state.description)
         assertEquals("39.9", state.amount)
         assertEquals(TransactionType.EXPENSE, state.type)
-        assertEquals(Category.OTHER, state.category)
+        assertEquals("OTHER", state.category)
         assertEquals("Streaming", state.note)
         assertEquals(RecurringFrequency.MONTHLY, state.frequency)
         assertTrue(state.active)
@@ -143,7 +146,7 @@ class EditRecurringViewModelTest {
         viewModel.load(1L)
         advanceUntilIdle()
 
-        val newDate = 1705708800000L  // fixed millis, no System.currentTimeMillis()
+        val newDate = 1705708800000L
         viewModel.onEvent(EditRecurringEvent.NextDueDateChanged(newDate))
 
         assertEquals(newDate, viewModel.uiState.value.nextDueDate)

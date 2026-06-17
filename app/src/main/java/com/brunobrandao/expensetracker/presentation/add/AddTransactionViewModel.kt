@@ -6,6 +6,7 @@ import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
+import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
 import com.brunobrandao.expensetracker.domain.usecase.AddTransactionUseCase
@@ -14,6 +15,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -25,11 +28,18 @@ class AddTransactionViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val syncRepository: SyncRepository,
     private val recurringRepository: RecurringTransactionRepository,
-    private val generateDue: GenerateDueRecurringTransactionsUseCase
+    private val generateDue: GenerateDueRecurringTransactionsUseCase,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddTransactionUiState())
     val uiState: StateFlow<AddTransactionUiState> = _uiState.asStateFlow()
+
+    init {
+        categoryRepository.observeCategories().onEach { cats ->
+            _uiState.update { it.copy(categories = cats) }
+        }.launchIn(viewModelScope)
+    }
 
     fun loadTransaction(transactionId: Long) {
         if (transactionId <= 0L) return
@@ -97,7 +107,6 @@ class AddTransactionViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (state.repeatEnabled && !state.isEditing) {
-                    // Create recurring rule; generator materialises any already-due transactions.
                     val rule = RecurringTransaction(
                         description = state.description.trim(),
                         amount = amount,
@@ -110,7 +119,6 @@ class AddTransactionViewModel @Inject constructor(
                         active = true
                     )
                     val insertedId = recurringRepository.upsert(rule)
-                    // System.currentTimeMillis() only at this boundary — never inside the use case.
                     generateDue(System.currentTimeMillis())
                     authRepository.currentUserId?.let { userId ->
                         try { syncRepository.syncWriteRecurring(insertedId, userId) } catch (_: Exception) {}
@@ -134,7 +142,6 @@ class AddTransactionViewModel @Inject constructor(
                         addTransaction(transaction)
                     }
 
-                    // Write-through: best-effort sync; failure is non-fatal (will retry in startSync)
                     authRepository.currentUserId?.let { userId ->
                         try { syncRepository.syncWrite(localId, userId) } catch (_: Exception) {}
                     }

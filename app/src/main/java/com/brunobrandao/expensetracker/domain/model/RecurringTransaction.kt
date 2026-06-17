@@ -5,7 +5,7 @@ data class RecurringTransaction(
     val description: String,
     val amount: Double,
     val type: TransactionType,
-    val category: Category,
+    val category: String,
     val note: String = "",
     val frequency: RecurringFrequency,
     val startDate: Long,

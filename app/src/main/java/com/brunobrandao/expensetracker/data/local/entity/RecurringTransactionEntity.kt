@@ -2,7 +2,6 @@ package com.brunobrandao.expensetracker.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 
@@ -13,7 +12,7 @@ data class RecurringTransactionEntity(
     val description: String,
     val amount: Double,
     val type: TransactionType,
-    val category: Category,
+    val category: String,
     val note: String = "",
     val frequency: RecurringFrequency,
     val startDate: Long,

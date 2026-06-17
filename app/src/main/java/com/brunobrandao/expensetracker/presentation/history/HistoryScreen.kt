@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import com.brunobrandao.expensetracker.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.presentation.home.TransactionDetailDialog
@@ -71,6 +70,7 @@ fun HistoryScreen(
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val categoriesMap = remember(state.categories) { state.categories.associateBy { it.key } }
     var detailTransaction by remember { mutableStateOf<Transaction?>(null) }
     var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
     var pendingDeleteTransaction by remember { mutableStateOf<Transaction?>(null) }
@@ -80,6 +80,7 @@ fun HistoryScreen(
     detailTransaction?.let { transaction ->
         TransactionDetailDialog(
             transaction = transaction,
+            categoriesMap = categoriesMap,
             onDismiss = { detailTransaction = null }
         )
     }
@@ -221,20 +222,20 @@ fun HistoryScreen(
             }
 
             // Category chips
-            items(Category.entries.toList()) { category ->
+            items(state.categories) { category ->
                 FilterChip(
-                    selected = state.filterCategory == category,
+                    selected = state.filterCategory == category.key,
                     onClick = {
                         viewModel.onEvent(HistoryEvent.FilterByType(null))
-                        if (state.filterCategory == category) {
+                        if (state.filterCategory == category.key) {
                             viewModel.onEvent(HistoryEvent.FilterByCategory(null))
                         } else {
-                            viewModel.onEvent(HistoryEvent.FilterByCategory(category))
+                            viewModel.onEvent(HistoryEvent.FilterByCategory(category.key))
                         }
                     },
                     label = {
                         Text(
-                            text = category.displayName,
+                            text = category.name,
                             style = MaterialTheme.typography.labelSmall
                         )
                     },
@@ -349,6 +350,7 @@ fun HistoryScreen(
                         ) {
                             TransactionItem(
                                 transaction = transaction,
+                                categoriesMap = categoriesMap,
                                 onClick = { detailTransaction = transaction },
                                 onLongClick = { selectedTransaction = transaction }
                             )

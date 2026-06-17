@@ -5,7 +5,7 @@ data class Transaction(
     val description: String,
     val amount: Double,
     val type: TransactionType,
-    val category: Category,
+    val category: String,
     val date: Long,
     val note: String = "",
     val createdAt: Long = System.currentTimeMillis(),
