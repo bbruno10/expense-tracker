@@ -3,6 +3,7 @@ package com.brunobrandao.expensetracker.presentation.add
 import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.TransactionType
+import com.brunobrandao.expensetracker.presentation.categories.CategoryFormState
 import java.time.LocalDate
 import java.time.ZoneOffset
 
@@ -21,7 +22,8 @@ data class AddTransactionUiState(
     val repeatEnabled: Boolean = false,
     val repeatFrequency: RecurringFrequency = RecurringFrequency.MONTHLY,
     val repeatStartDate: Long = LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
-    val recurringId: Long? = null
+    val recurringId: Long? = null,
+    val newCategoryForm: CategoryFormState? = null
 ) {
     val isEditing: Boolean get() = editingId != null
 }
@@ -38,4 +40,10 @@ sealed interface AddTransactionEvent {
     data object RepeatToggled : AddTransactionEvent
     data class FrequencyChanged(val value: RecurringFrequency) : AddTransactionEvent
     data class StartDateChanged(val value: Long) : AddTransactionEvent
+    data object ShowNewCategoryDialog : AddTransactionEvent
+    data object DismissNewCategoryDialog : AddTransactionEvent
+    data class NewCategoryNameChanged(val value: String) : AddTransactionEvent
+    data class NewCategoryIconChanged(val value: String) : AddTransactionEvent
+    data class NewCategoryColorChanged(val value: Int) : AddTransactionEvent
+    data object SaveNewCategory : AddTransactionEvent
 }

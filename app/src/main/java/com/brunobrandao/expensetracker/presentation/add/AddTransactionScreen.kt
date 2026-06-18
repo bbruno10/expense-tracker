@@ -65,6 +65,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.TransactionType
+import com.brunobrandao.expensetracker.presentation.categories.CategoryFormDialog
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -91,7 +92,6 @@ fun AddTransactionScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartDatePicker by remember { mutableStateOf(false) }
-    var showNewCategoryMessage by remember { mutableStateOf(false) }
 
     // Load transaction for editing
     LaunchedEffect(transactionId) {
@@ -110,13 +110,6 @@ fun AddTransactionScreen(
         state.errorMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             viewModel.onEvent(AddTransactionEvent.DismissError)
-        }
-    }
-
-    LaunchedEffect(showNewCategoryMessage) {
-        if (showNewCategoryMessage) {
-            snackbarHostState.showSnackbar("Custom categories coming soon!")
-            showNewCategoryMessage = false
         }
     }
 
@@ -170,6 +163,21 @@ fun AddTransactionScreen(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    state.newCategoryForm?.let { form ->
+        CategoryFormDialog(
+            title = "New category",
+            name = form.name,
+            icon = form.icon,
+            colorIndex = form.colorIndex,
+            nameError = form.nameError,
+            onNameChange = { viewModel.onEvent(AddTransactionEvent.NewCategoryNameChanged(it)) },
+            onIconChange = { viewModel.onEvent(AddTransactionEvent.NewCategoryIconChanged(it)) },
+            onColorChange = { viewModel.onEvent(AddTransactionEvent.NewCategoryColorChanged(it)) },
+            onConfirm = { viewModel.onEvent(AddTransactionEvent.SaveNewCategory) },
+            onDismiss = { viewModel.onEvent(AddTransactionEvent.DismissNewCategoryDialog) }
+        )
     }
 
     Scaffold(
@@ -336,7 +344,7 @@ fun AddTransactionScreen(
                 // + New category chip
                 FilterChip(
                     selected = false,
-                    onClick = { showNewCategoryMessage = true },
+                    onClick = { viewModel.onEvent(AddTransactionEvent.ShowNewCategoryDialog) },
                     label = { Text("+ New") },
                     colors = FilterChipDefaults.filterChipColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
