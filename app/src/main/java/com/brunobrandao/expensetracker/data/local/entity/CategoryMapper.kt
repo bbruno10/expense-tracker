@@ -11,7 +11,8 @@ fun CategoryEntity.toDomain(): Category = Category(
     color = Color(colorArgb),
     lightColor = Color(lightColorArgb),
     isDefault = isDefault,
-    position = position
+    position = position,
+    archived = archived
 )
 
 fun Category.toEntity(
@@ -26,6 +27,7 @@ fun Category.toEntity(
     lightColorArgb = lightColor.toArgb(),
     isDefault = isDefault,
     position = position,
+    archived = archived,
     remoteId = remoteId,
     synced = synced,
     updatedAt = updatedAt

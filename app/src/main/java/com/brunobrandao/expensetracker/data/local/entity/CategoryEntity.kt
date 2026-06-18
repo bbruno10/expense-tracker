@@ -13,6 +13,7 @@ data class CategoryEntity(
     val lightColorArgb: Int,
     val isDefault: Boolean,
     val position: Int,
+    @ColumnInfo(defaultValue = "0") val archived: Boolean = false,
     val remoteId: String? = null,
     @ColumnInfo(defaultValue = "0") val synced: Boolean = false,
     @ColumnInfo(defaultValue = "0") val updatedAt: Long = 0

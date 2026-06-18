@@ -9,5 +9,6 @@ data class Category(
     val color: Color,
     val lightColor: Color,
     val isDefault: Boolean = false,
-    val position: Int = 0
+    val position: Int = 0,
+    val archived: Boolean = false
 )
