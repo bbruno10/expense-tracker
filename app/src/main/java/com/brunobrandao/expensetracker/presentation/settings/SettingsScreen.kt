@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Label
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,6 +57,7 @@ private val GreenPrimary = Color(0xFF1D9E75)
 fun SettingsScreen(
     onSignOut: () -> Unit,
     onNavigateToRecurring: () -> Unit = {},
+    onNavigateToManageCategories: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -173,6 +175,13 @@ fun SettingsScreen(
                 title = "Recurring expenses",
                 subtitle = "Manage your recurring rules",
                 onClick = onNavigateToRecurring
+            )
+            SettingsDivider()
+            SettingsItem(
+                icon = Icons.Default.Label,
+                title = "Categories",
+                subtitle = "Create and manage custom categories",
+                onClick = onNavigateToManageCategories
             )
         }
 

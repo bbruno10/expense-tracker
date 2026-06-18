@@ -15,4 +15,5 @@ sealed class Screen(val route: String) {
     data object EditRecurring : Screen("edit_recurring/{recurringId}") {
         fun createRoute(id: Long) = "edit_recurring/$id"
     }
+    data object ManageCategories : Screen("manage_categories")
 }
