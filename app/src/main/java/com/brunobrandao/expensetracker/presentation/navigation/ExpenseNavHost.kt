@@ -1,5 +1,6 @@
 package com.brunobrandao.expensetracker.presentation.navigation
 
+import com.brunobrandao.expensetracker.presentation.categories.ManageCategoriesScreen
 import com.brunobrandao.expensetracker.presentation.recurring.EditRecurringScreen
 import com.brunobrandao.expensetracker.presentation.recurring.RecurringScreen
 import com.brunobrandao.expensetracker.presentation.settings.SettingsScreen
@@ -261,7 +262,16 @@ fun ExpenseNavHost(navController: NavHostController) {
                         },
                         onNavigateToRecurring = {
                             navController.navigate(Screen.Recurring.route)
+                        },
+                        onNavigateToManageCategories = {
+                            navController.navigate(Screen.ManageCategories.route)
                         }
+                    )
+                }
+
+                composable(Screen.ManageCategories.route) {
+                    ManageCategoriesScreen(
+                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
 

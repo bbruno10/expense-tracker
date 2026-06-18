@@ -1,19 +1,24 @@
 package com.brunobrandao.expensetracker.presentation.add
 
+import com.brunobrandao.expensetracker.data.local.dao.CategoryDao
+import com.brunobrandao.expensetracker.data.local.entity.CategoryEntity
+import com.brunobrandao.expensetracker.data.repository.CategoryRepositoryImpl
+import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
-import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
-import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
 import com.brunobrandao.expensetracker.domain.usecase.AddTransactionUseCase
+import com.brunobrandao.expensetracker.domain.usecase.CreateCategoryUseCase
 import com.brunobrandao.expensetracker.domain.usecase.GenerateDueRecurringTransactionsUseCase
+import com.brunobrandao.expensetracker.domain.util.Clock
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -30,17 +35,25 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+/**
+ * Uses real use cases + real CategoryRepositoryImpl + mocked CategoryDao, mirroring
+ * ManageCategoriesViewModelTest. This sidesteps MockK's inability to stub Compose Color
+ * (an inline value class) in its mangled JVM signature.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddTransactionViewModelTest {
 
+    private val fakeNow = 1717200000000L
+    private val fakeClock = Clock { fakeNow }
     private val testDispatcher = StandardTestDispatcher()
+
     private lateinit var addTransactionUseCase: AddTransactionUseCase
     private lateinit var repository: TransactionRepository
     private lateinit var authRepository: AuthRepository
     private lateinit var syncRepository: SyncRepository
     private lateinit var recurringRepository: RecurringTransactionRepository
     private lateinit var generateDue: GenerateDueRecurringTransactionsUseCase
-    private lateinit var categoryRepository: CategoryRepository
+    private lateinit var dao: CategoryDao
     private lateinit var viewModel: AddTransactionViewModel
 
     @Before
@@ -52,11 +65,14 @@ class AddTransactionViewModelTest {
         syncRepository = mockk(relaxed = true)
         recurringRepository = mockk(relaxed = true)
         generateDue = mockk(relaxed = true)
-        categoryRepository = mockk(relaxed = true)
-        every { categoryRepository.observeCategories() } returns flowOf(emptyList())
+        dao = mockk(relaxed = true)
+        coEvery { dao.getByKey(any()) } returns null
+        every { dao.observeAll() } returns flowOf(emptyList())
+        val categoryRepo = CategoryRepositoryImpl(dao, fakeClock)
+        val createCategory = CreateCategoryUseCase(categoryRepo)
         viewModel = AddTransactionViewModel(
             addTransactionUseCase, repository, authRepository, syncRepository,
-            recurringRepository, generateDue, categoryRepository
+            recurringRepository, generateDue, categoryRepo, createCategory
         )
     }
 
@@ -413,5 +429,97 @@ class AddTransactionViewModelTest {
         coVerify { addTransactionUseCase(any()) }
         coVerify(exactly = 0) { recurringRepository.upsert(any()) }
         coVerify(exactly = 0) { generateDue(any()) }
+    }
+
+    // ---- New Category Dialog ----
+
+    @Test
+    fun `ShowNewCategoryDialog opens form with defaults`() {
+        viewModel.onEvent(AddTransactionEvent.ShowNewCategoryDialog)
+
+        val form = viewModel.uiState.value.newCategoryForm
+        assertFalse(form == null)
+        assertEquals("", form!!.name)
+        assertNull(form.nameError)
+    }
+
+    @Test
+    fun `DismissNewCategoryDialog closes dialog without changing category`() {
+        viewModel.onEvent(AddTransactionEvent.CategoryChanged("FOOD"))
+        viewModel.onEvent(AddTransactionEvent.ShowNewCategoryDialog)
+        viewModel.onEvent(AddTransactionEvent.DismissNewCategoryDialog)
+
+        assertNull(viewModel.uiState.value.newCategoryForm)
+        assertEquals("FOOD", viewModel.uiState.value.category)
+    }
+
+    @Test
+    fun `SaveNewCategory success auto-selects created category and closes dialog`() = runTest {
+        // Capture the entity upserted into the DAO to get the generated UUID key.
+        val upsertSlot = slot<CategoryEntity>()
+        coEvery { dao.upsert(capture(upsertSlot)) } returns Unit
+
+        viewModel.onEvent(AddTransactionEvent.ShowNewCategoryDialog)
+        viewModel.onEvent(AddTransactionEvent.NewCategoryNameChanged("Hobbies"))
+        viewModel.onEvent(AddTransactionEvent.SaveNewCategory)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.newCategoryForm)
+        assertEquals(upsertSlot.captured.key, viewModel.uiState.value.category)
+    }
+
+    @Test
+    fun `SaveNewCategory preserves rest of form after creating category`() = runTest {
+        val upsertSlot = slot<CategoryEntity>()
+        coEvery { dao.upsert(capture(upsertSlot)) } returns Unit
+
+        viewModel.onEvent(AddTransactionEvent.DescriptionChanged("Board game"))
+        viewModel.onEvent(AddTransactionEvent.AmountChanged("35.00"))
+        viewModel.onEvent(AddTransactionEvent.TypeChanged(TransactionType.EXPENSE))
+        viewModel.onEvent(AddTransactionEvent.ShowNewCategoryDialog)
+        viewModel.onEvent(AddTransactionEvent.NewCategoryNameChanged("Hobbies"))
+        viewModel.onEvent(AddTransactionEvent.SaveNewCategory)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("Board game", state.description)
+        assertEquals("35.00", state.amount)
+        assertEquals(TransactionType.EXPENSE, state.type)
+        assertEquals(upsertSlot.captured.key, state.category)
+        assertNull(state.newCategoryForm)
+    }
+
+    @Test
+    fun `SaveNewCategory with empty name surfaces nameError without closing dialog`() = runTest {
+        // Empty name is rejected by CreateCategoryUseCase before any DAO call.
+        viewModel.onEvent(AddTransactionEvent.ShowNewCategoryDialog)
+        viewModel.onEvent(AddTransactionEvent.NewCategoryNameChanged(""))
+        viewModel.onEvent(AddTransactionEvent.SaveNewCategory)
+        advanceUntilIdle()
+
+        val form = viewModel.uiState.value.newCategoryForm
+        assertFalse(form == null)
+        assertTrue(form!!.nameError!!.contains("empty"))
+        assertEquals("OTHER", viewModel.uiState.value.category)
+    }
+
+    @Test
+    fun `SaveNewCategory with duplicate name surfaces nameError without closing dialog`() = runTest {
+        val foodEntity = CategoryEntity(
+            key = "food-key", name = "Food", icon = "🍔",
+            colorArgb = 0xFFE53935.toInt(), lightColorArgb = 0xFFFCEBEB.toInt(),
+            isDefault = false, position = 0, archived = false
+        )
+        coEvery { dao.getActive() } returns listOf(foodEntity)
+
+        viewModel.onEvent(AddTransactionEvent.ShowNewCategoryDialog)
+        viewModel.onEvent(AddTransactionEvent.NewCategoryNameChanged("Food"))
+        viewModel.onEvent(AddTransactionEvent.SaveNewCategory)
+        advanceUntilIdle()
+
+        val form = viewModel.uiState.value.newCategoryForm
+        assertFalse(form == null)
+        assertTrue(form!!.nameError!!.contains("already exists"))
+        assertEquals("OTHER", viewModel.uiState.value.category)
     }
 }

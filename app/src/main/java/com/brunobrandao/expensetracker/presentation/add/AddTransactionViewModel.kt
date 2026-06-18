@@ -10,7 +10,10 @@ import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
 import com.brunobrandao.expensetracker.domain.usecase.AddTransactionUseCase
+import com.brunobrandao.expensetracker.domain.usecase.CreateCategoryUseCase
 import com.brunobrandao.expensetracker.domain.usecase.GenerateDueRecurringTransactionsUseCase
+import com.brunobrandao.expensetracker.presentation.categories.CATEGORY_COLORS
+import com.brunobrandao.expensetracker.presentation.categories.CategoryFormState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +32,8 @@ class AddTransactionViewModel @Inject constructor(
     private val syncRepository: SyncRepository,
     private val recurringRepository: RecurringTransactionRepository,
     private val generateDue: GenerateDueRecurringTransactionsUseCase,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val createCategory: CreateCategoryUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddTransactionUiState())
@@ -86,6 +90,36 @@ class AddTransactionViewModel @Inject constructor(
             is AddTransactionEvent.Save -> saveTransaction()
             is AddTransactionEvent.DismissError ->
                 _uiState.update { it.copy(errorMessage = null) }
+            is AddTransactionEvent.ShowNewCategoryDialog ->
+                _uiState.update { it.copy(newCategoryForm = CategoryFormState()) }
+            is AddTransactionEvent.DismissNewCategoryDialog ->
+                _uiState.update { it.copy(newCategoryForm = null) }
+            is AddTransactionEvent.NewCategoryNameChanged ->
+                _uiState.update { it.copy(newCategoryForm = it.newCategoryForm?.copy(name = event.value, nameError = null)) }
+            is AddTransactionEvent.NewCategoryIconChanged ->
+                _uiState.update { it.copy(newCategoryForm = it.newCategoryForm?.copy(icon = event.value)) }
+            is AddTransactionEvent.NewCategoryColorChanged ->
+                _uiState.update { it.copy(newCategoryForm = it.newCategoryForm?.copy(colorIndex = event.value)) }
+            is AddTransactionEvent.SaveNewCategory -> saveNewCategory()
+        }
+    }
+
+    private fun saveNewCategory() {
+        val form = _uiState.value.newCategoryForm ?: return
+        val colorOption = CATEGORY_COLORS.getOrElse(form.colorIndex) { CATEGORY_COLORS[0] }
+        viewModelScope.launch {
+            runCatching {
+                createCategory(form.name, form.icon, colorOption.color, colorOption.lightColor)
+            }.onSuccess { category ->
+                _uiState.update { it.copy(newCategoryForm = null, category = category.key) }
+            }.onFailure { e ->
+                when (e) {
+                    is IllegalArgumentException ->
+                        _uiState.update { it.copy(newCategoryForm = it.newCategoryForm?.copy(nameError = e.message)) }
+                    else ->
+                        _uiState.update { it.copy(newCategoryForm = null, errorMessage = e.message) }
+                }
+            }
         }
     }
 
