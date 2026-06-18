@@ -9,8 +9,9 @@ import androidx.lifecycle.viewModelScope
 import com.brunobrandao.expensetracker.data.preferences.Currency
 import com.brunobrandao.expensetracker.data.preferences.ThemeMode
 import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
-import com.brunobrandao.expensetracker.domain.model.DefaultCategories
+import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
+import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.usecase.GetTransactionsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -31,6 +32,7 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val preferencesRepository: UserPreferencesRepository,
     private val getTransactions: GetTransactionsUseCase,
+    private val categoryRepository: CategoryRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -88,25 +90,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val transactions = getTransactions().first()
-                val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US)
+                val categoryNames = categoryRepository.observeCategories().first()
+                    .associate { it.key to it.name }
                 val fileDate = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
 
-                val csvContent = buildString {
-                    appendLine("Date,Type,Category,Description,Amount,Note")
-                    transactions.forEach { transaction ->
-                        val date = dateFormat.format(Date(transaction.date))
-                        val type = transaction.type.displayName
-                        val category = DefaultCategories.LIST.find { it.key == transaction.category }?.name ?: transaction.category
-                        val description = "\"${transaction.description.replace("\"", "\"\"")}\""
-                        val amount = if (transaction.type == TransactionType.EXPENSE) {
-                            "-${transaction.amount}"
-                        } else {
-                            transaction.amount.toString()
-                        }
-                        val note = "\"${transaction.note.replace("\"", "\"\"")}\""
-                        appendLine("$date,$type,$category,$description,$amount,$note")
-                    }
-                }
+                val csvContent = buildCsvContent(transactions, categoryNames)
 
                 val contentValues = ContentValues().apply {
                     put(MediaStore.Downloads.DISPLAY_NAME, "expense_tracker_$fileDate.csv")
@@ -127,6 +115,29 @@ class SettingsViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.update { it.copy(showExportSuccess = false) }
             }
+        }
+    }
+}
+
+internal fun buildCsvContent(
+    transactions: List<Transaction>,
+    categoryNames: Map<String, String>
+): String {
+    val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US)
+    return buildString {
+        appendLine("Date,Type,Category,Description,Amount,Note")
+        transactions.forEach { transaction ->
+            val date = dateFormat.format(Date(transaction.date))
+            val type = transaction.type.displayName
+            val category = categoryNames[transaction.category] ?: transaction.category
+            val description = "\"${transaction.description.replace("\"", "\"\"")}\""
+            val amount = if (transaction.type == TransactionType.EXPENSE) {
+                "-${transaction.amount}"
+            } else {
+                transaction.amount.toString()
+            }
+            val note = "\"${transaction.note.replace("\"", "\"\"")}\""
+            appendLine("$date,$type,$category,$description,$amount,$note")
         }
     }
 }
