@@ -14,7 +14,7 @@ import com.brunobrandao.expensetracker.data.local.entity.TransactionEntity
 
 @Database(
     entities = [TransactionEntity::class, RecurringTransactionEntity::class, CategoryEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -79,6 +79,12 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
+            }
+        }
+
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `categories` ADD COLUMN `archived` INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

@@ -14,6 +14,12 @@ interface CategoryDao {
     @Query("SELECT * FROM categories ORDER BY position ASC")
     fun observeAll(): Flow<List<CategoryEntity>>
 
+    @Query("SELECT * FROM categories WHERE archived = 0 ORDER BY position ASC")
+    fun observeActive(): Flow<List<CategoryEntity>>
+
+    @Query("SELECT * FROM categories WHERE archived = 0 ORDER BY position ASC")
+    suspend fun getActive(): List<CategoryEntity>
+
     @Query("SELECT * FROM categories WHERE `key` = :key LIMIT 1")
     suspend fun getByKey(key: String): CategoryEntity?
 
@@ -26,7 +32,11 @@ interface CategoryDao {
     @Query("DELETE FROM categories WHERE `key` = :key")
     suspend fun deleteByKey(key: String)
 
-    @Query("SELECT COUNT(*) FROM transactions WHERE category = :key")
+    // Covers both transactions and recurring_transactions — guards the delete use case correctly.
+    @Query("""
+        SELECT (SELECT COUNT(*) FROM transactions WHERE category = :key) +
+               (SELECT COUNT(*) FROM recurring_transactions WHERE category = :key)
+    """)
     suspend fun countTransactionsUsing(key: String): Int
 
     @Query("SELECT * FROM categories WHERE synced = 0")

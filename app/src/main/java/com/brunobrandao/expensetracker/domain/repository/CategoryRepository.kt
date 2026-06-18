@@ -7,6 +7,10 @@ interface CategoryRepository {
 
     fun observeCategories(): Flow<List<Category>>
 
+    fun observeActiveCategories(): Flow<List<Category>>
+
+    suspend fun getActiveCategories(): List<Category>
+
     suspend fun getCategory(key: String): Category?
 
     suspend fun upsert(category: Category)
