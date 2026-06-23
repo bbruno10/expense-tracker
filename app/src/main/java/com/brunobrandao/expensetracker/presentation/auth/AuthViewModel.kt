@@ -3,6 +3,7 @@ package com.brunobrandao.expensetracker.presentation.auth
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -19,7 +20,8 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val syncRepository: SyncRepository
+    private val syncRepository: SyncRepository,
+    private val preferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -98,6 +100,7 @@ class AuthViewModel @Inject constructor(
                 try { syncRepository.pushPendingAndClear(userId) } catch (_: Exception) {}
             }
             authRepository.signOut()
+            preferencesRepository.clearCurrency()
         }
     }
 

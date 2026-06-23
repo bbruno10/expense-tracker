@@ -11,6 +11,7 @@ import com.brunobrandao.expensetracker.data.preferences.ThemeMode
 import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
+import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.usecase.GetTransactionsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,7 +34,8 @@ class SettingsViewModel @Inject constructor(
     private val preferencesRepository: UserPreferencesRepository,
     private val getTransactions: GetTransactionsUseCase,
     private val categoryRepository: CategoryRepository,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -57,8 +59,12 @@ class SettingsViewModel @Inject constructor(
     fun onEvent(event: SettingsEvent) {
         when (event) {
             is SettingsEvent.CurrencyChanged -> {
+                val userId = authRepository.currentUserId
                 viewModelScope.launch {
                     preferencesRepository.updateCurrency(event.currency)
+                    if (userId != null) {
+                        preferencesRepository.pushCurrency(userId, event.currency)
+                    }
                 }
                 _uiState.update { it.copy(showCurrencyDialog = false) }
             }
