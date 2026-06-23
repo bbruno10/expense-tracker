@@ -4,6 +4,8 @@ import com.brunobrandao.expensetracker.data.local.dao.RecurringTransactionDao
 import com.brunobrandao.expensetracker.data.local.dao.TransactionDao
 import com.brunobrandao.expensetracker.data.local.entity.RecurringTransactionEntity
 import com.brunobrandao.expensetracker.data.local.entity.TransactionEntity
+import com.brunobrandao.expensetracker.data.preferences.Currency
+import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
@@ -26,7 +28,8 @@ class SyncRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val authRepository: AuthRepository,
     private val dao: TransactionDao,
-    private val recurringDao: RecurringTransactionDao
+    private val recurringDao: RecurringTransactionDao,
+    private val preferencesRepository: UserPreferencesRepository
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var listenerRegistration: ListenerRegistration? = null
@@ -48,6 +51,13 @@ class SyncRepository @Inject constructor(
         recurringListenerRegistration = null
 
         syncJob = scope.launch {
+            // ── Currency preference ───────────────────────────────────────────
+            preferencesRepository.pullCurrency(userId)?.let { code ->
+                Currency.entries.find { it.code == code }?.let { currency ->
+                    preferencesRepository.updateCurrency(currency)
+                }
+            }
+
             // ── Transactions ─────────────────────────────────────────────────
             dao.getTransactionsWithoutRemoteId().forEach { entity ->
                 dao.updateRemoteId(
