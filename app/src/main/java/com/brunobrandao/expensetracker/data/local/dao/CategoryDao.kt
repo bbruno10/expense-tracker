@@ -41,4 +41,10 @@ interface CategoryDao {
 
     @Query("SELECT * FROM categories WHERE synced = 0")
     suspend fun getUnsynced(): List<CategoryEntity>
+
+    @Query("SELECT * FROM categories WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun getByRemoteId(remoteId: String): CategoryEntity?
+
+    @Query("UPDATE categories SET synced = 1 WHERE `key` = :key")
+    suspend fun markSynced(key: String)
 }
