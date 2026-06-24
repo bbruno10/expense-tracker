@@ -112,14 +112,22 @@ class SyncRepository @Inject constructor(
     }
 
     /**
-     * Attempts to push all unsynced rows before logout.
-     * Categories are pushed but NOT cleared — they remain local across sessions.
-     * Transactions and recurring rules are cleared when all rows are confirmed synced.
-     * If offline or any push fails, Room is left intact.
+     * Attempts to push all unsynced rows before logout, then cleans up local state.
+     *
+     * Categories: push is best-effort; custom categories (isDefault=false) are ALWAYS
+     * deleted afterwards, even if the push failed. This unconditional clear is intentional:
+     * custom categories are metadata, not financial data, and user isolation takes priority
+     * over the rare case of losing an offline-only custom category. Defaults (isDefault=true)
+     * are never touched here — they survive the logout and are re-seeded by
+     * ensureDefaultCategories() on the next onCreate().
+     *
+     * Transactions / recurring rules: cleared only when ALL rows confirmed synced (guard).
+     * Financial data must never be silently lost.
      */
     suspend fun pushPendingAndClear(userId: String) {
-        // ── Categories (no clear — categories remain local) ───────────────────
+        // ── Categories: best-effort push, then unconditional custom clear ─────
         pushUnsyncedCategories(userId)
+        categoryDao.deleteCustomCategories()
 
         // ── Transactions ─────────────────────────────────────────────────────
         val pending = dao.getUnsyncedTransactions()
