@@ -77,6 +77,11 @@ class UserPreferencesRepository @Inject constructor(
         context.dataStore.edit { it.remove(Keys.CURRENCY) }
     }
 
+    /** Removes all user preference keys. Used on account deletion. */
+    suspend fun clearAllPreferences() {
+        context.dataStore.edit { it.clear() }
+    }
+
     private fun settingsRef(userId: String) = firestore
         .collection("users").document(userId)
         .collection("settings").document("preferences")

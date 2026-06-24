@@ -10,7 +10,10 @@ data class SettingsUiState(
     val showCurrencyDialog: Boolean = false,
     val showThemeDialog: Boolean = false,
     val showExportSuccess: Boolean = false,
-    val showAboutDialog: Boolean = false
+    val showAboutDialog: Boolean = false,
+    val showDeleteAccountDialog: Boolean = false,
+    val isDeleteLoading: Boolean = false,
+    val deleteErrorMessage: String? = null
 )
 
 sealed interface SettingsEvent {
@@ -21,4 +24,6 @@ sealed interface SettingsEvent {
     data object ToggleAboutDialog : SettingsEvent
     data object ExportData : SettingsEvent
     data object DismissExportSuccess : SettingsEvent
+    data object ToggleDeleteAccountDialog : SettingsEvent
+    data class DeleteAccount(val password: String) : SettingsEvent
 }
