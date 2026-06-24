@@ -260,6 +260,11 @@ fun ExpenseNavHost(navController: NavHostController) {
                                 popUpTo(0) { inclusive = true }
                             }
                         },
+                        onDeleteAccountSuccess = {
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        },
                         onNavigateToRecurring = {
                             navController.navigate(Screen.Recurring.route)
                         },

@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.brunobrandao.expensetracker.data.preferences.Currency
 import com.brunobrandao.expensetracker.data.preferences.ThemeMode
 import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
+import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
@@ -35,7 +36,8 @@ class SettingsViewModel @Inject constructor(
     private val getTransactions: GetTransactionsUseCase,
     private val categoryRepository: CategoryRepository,
     @ApplicationContext private val context: Context,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val syncRepository: SyncRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -56,7 +58,7 @@ class SettingsViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
-    fun onEvent(event: SettingsEvent) {
+    fun onEvent(event: SettingsEvent, onDeleteAccountSuccess: () -> Unit = {}) {
         when (event) {
             is SettingsEvent.CurrencyChanged -> {
                 val userId = authRepository.currentUserId
@@ -89,6 +91,67 @@ class SettingsViewModel @Inject constructor(
             is SettingsEvent.DismissExportSuccess -> {
                 _uiState.update { it.copy(showExportSuccess = false) }
             }
+            is SettingsEvent.ToggleDeleteAccountDialog -> {
+                _uiState.update {
+                    it.copy(
+                        showDeleteAccountDialog = !it.showDeleteAccountDialog,
+                        deleteErrorMessage = null
+                    )
+                }
+            }
+            is SettingsEvent.DeleteAccount -> {
+                deleteAccount(event.password, onDeleteAccountSuccess)
+            }
+        }
+    }
+
+    private fun deleteAccount(password: String, onSuccess: () -> Unit) {
+        val userId = authRepository.currentUserId ?: return
+        _uiState.update { it.copy(isDeleteLoading = true, deleteErrorMessage = null) }
+        viewModelScope.launch {
+            // Step 1: stop listeners before touching data
+            syncRepository.stopSync()
+
+            // Step 2: reauthenticate — MUST succeed before any data is touched
+            authRepository.reauthenticate(password).onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isDeleteLoading = false,
+                        deleteErrorMessage = error.message ?: "Incorrect password. Please try again."
+                    )
+                }
+                return@launch
+            }
+
+            // Step 3: delete Firestore data (while auth is still valid)
+            runCatching { syncRepository.deleteAllUserDataFromFirestore(userId) }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isDeleteLoading = false,
+                        deleteErrorMessage = error.message ?: "Could not delete your data. Check your connection and try again."
+                    )
+                }
+                return@launch
+            }
+
+            // Steps 4 & 5: clear local data and preferences (best-effort; local, should not fail)
+            runCatching { syncRepository.deleteAllLocalData() }
+            runCatching { preferencesRepository.clearAllPreferences() }
+
+            // Step 6: delete Firebase Auth account
+            authRepository.deleteAccount().onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isDeleteLoading = false,
+                        deleteErrorMessage = error.message ?: "Could not delete account. Please try again."
+                    )
+                }
+                return@launch
+            }
+
+            // Success — navigate to login
+            _uiState.update { it.copy(isDeleteLoading = false, showDeleteAccountDialog = false) }
+            onSuccess()
         }
     }
 

@@ -278,6 +278,41 @@ class SyncRepository @Inject constructor(
         }
     }
 
+    // --- Account deletion ---
+
+    /**
+     * Deletes all Firestore documents belonging to the user, subcollection by subcollection.
+     * Must be called while the user is still authenticated (Security Rules require a valid uid).
+     */
+    suspend fun deleteAllUserDataFromFirestore(userId: String) {
+        val userRef = firestore.collection("users").document(userId)
+        deleteCollection(userId, "transactions")
+        deleteCollection(userId, "recurring_transactions")
+        deleteCollection(userId, "categories")
+        userRef.collection("settings").document("preferences").delete().await()
+    }
+
+    /** Clears all three Room tables. */
+    suspend fun deleteAllLocalData() {
+        dao.deleteAll()
+        recurringDao.deleteAll()
+        categoryDao.deleteAll()
+    }
+
+    /**
+     * Fetches all documents in the given subcollection and deletes them in chunks of 400.
+     * Firestore batches are capped at 500 ops; 400 gives headroom.
+     */
+    private suspend fun deleteCollection(userId: String, collection: String) {
+        val docs = firestore.collection("users").document(userId)
+            .collection(collection).get().await().documents
+        docs.chunked(400).forEach { chunk ->
+            val batch = firestore.batch()
+            chunk.forEach { batch.delete(it.reference) }
+            batch.commit().await()
+        }
+    }
+
     // --- Private helpers ---
 
     private suspend fun pushToFirestore(entity: TransactionEntity, userId: String) {
