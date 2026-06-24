@@ -1,7 +1,9 @@
 package com.brunobrandao.expensetracker.data.sync
 
+import com.brunobrandao.expensetracker.data.local.dao.CategoryDao
 import com.brunobrandao.expensetracker.data.local.dao.RecurringTransactionDao
 import com.brunobrandao.expensetracker.data.local.dao.TransactionDao
+import com.brunobrandao.expensetracker.data.local.entity.CategoryEntity
 import com.brunobrandao.expensetracker.data.local.entity.RecurringTransactionEntity
 import com.brunobrandao.expensetracker.data.local.entity.TransactionEntity
 import com.brunobrandao.expensetracker.data.preferences.Currency
@@ -29,16 +31,18 @@ class SyncRepository @Inject constructor(
     private val authRepository: AuthRepository,
     private val dao: TransactionDao,
     private val recurringDao: RecurringTransactionDao,
+    private val categoryDao: CategoryDao,
     private val preferencesRepository: UserPreferencesRepository
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var listenerRegistration: ListenerRegistration? = null
     private var recurringListenerRegistration: ListenerRegistration? = null
+    private var categoryListenerRegistration: ListenerRegistration? = null
     private var syncJob: Job? = null
 
     /**
      * Called when the user logs in or when the app starts with an active session.
-     * For both transactions and recurring rules:
+     * For transactions, recurring rules, and categories:
      * a) Backfill: assigns UUIDs to rows that were created before Firebase.
      * b) Push: uploads all unsynced rows to Firestore.
      * c) Listen: attaches real-time listeners to reflect remote changes in Room.
@@ -49,6 +53,8 @@ class SyncRepository @Inject constructor(
         listenerRegistration = null
         recurringListenerRegistration?.remove()
         recurringListenerRegistration = null
+        categoryListenerRegistration?.remove()
+        categoryListenerRegistration = null
 
         syncJob = scope.launch {
             // ── Currency preference ───────────────────────────────────────────
@@ -85,26 +91,36 @@ class SyncRepository @Inject constructor(
                 if (current.remoteId.isEmpty()) return@forEach
                 try { pushRecurringToFirestore(current, userId) } catch (_: Exception) {}
             }
+
+            // ── Categories ────────────────────────────────────────────────────
+            pushUnsyncedCategories(userId)
         }
 
         attachListener(userId)
         attachRecurringListener(userId)
+        attachCategoryListener(userId)
     }
 
-    /** Removes both Firestore real-time listeners. */
+    /** Removes all Firestore real-time listeners. */
     fun stopSync() {
         listenerRegistration?.remove()
         listenerRegistration = null
         recurringListenerRegistration?.remove()
         recurringListenerRegistration = null
+        categoryListenerRegistration?.remove()
+        categoryListenerRegistration = null
     }
 
     /**
      * Attempts to push all unsynced rows before logout.
-     * Clears each table only when all its rows are confirmed synced.
+     * Categories are pushed but NOT cleared — they remain local across sessions.
+     * Transactions and recurring rules are cleared when all rows are confirmed synced.
      * If offline or any push fails, Room is left intact.
      */
     suspend fun pushPendingAndClear(userId: String) {
+        // ── Categories (no clear — categories remain local) ───────────────────
+        pushUnsyncedCategories(userId)
+
         // ── Transactions ─────────────────────────────────────────────────────
         val pending = dao.getUnsyncedTransactions()
         var allSynced = true
@@ -199,6 +215,66 @@ class SyncRepository @Inject constructor(
                     .collection("recurring_transactions").document(entity.remoteId)
                     .delete().await()
             } catch (_: Exception) {}
+        }
+    }
+
+    // --- Category sync ---
+
+    internal suspend fun pushUnsyncedCategories(userId: String) {
+        categoryDao.getUnsynced().forEach { entity ->
+            val current = if (entity.remoteId == null) {
+                val withId = entity.copy(remoteId = UUID.randomUUID().toString())
+                categoryDao.upsert(withId)
+                withId
+            } else entity
+            try { pushCategoryToFirestore(current, userId) } catch (_: Exception) {}
+        }
+    }
+
+    private suspend fun pushCategoryToFirestore(entity: CategoryEntity, userId: String) {
+        val remoteId = entity.remoteId ?: return
+        firestore.collection("users").document(userId)
+            .collection("categories").document(remoteId)
+            .set(entity.toFirestoreMap()).await()
+        categoryDao.markSynced(entity.key)
+    }
+
+    private fun attachCategoryListener(userId: String) {
+        categoryListenerRegistration = firestore
+            .collection("users").document(userId)
+            .collection("categories")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+                scope.launch {
+                    for (change in snapshot.documentChanges) {
+                        processCategoryChange(change.type, change.document)
+                    }
+                }
+            }
+    }
+
+    internal suspend fun processCategoryChange(
+        changeType: DocumentChange.Type,
+        snapshot: DocumentSnapshot
+    ) {
+        when (changeType) {
+            DocumentChange.Type.ADDED, DocumentChange.Type.MODIFIED -> {
+                val remote = snapshot.toCategoryEntity() ?: return
+                val remoteId = remote.remoteId ?: return
+                val existing = categoryDao.getByRemoteId(remoteId)
+                if (existing != null) {
+                    if (!existing.synced || existing.updatedAt < remote.updatedAt) {
+                        categoryDao.upsert(remote.copy(key = existing.key))
+                    }
+                } else {
+                    categoryDao.upsert(remote)
+                }
+            }
+            DocumentChange.Type.REMOVED -> {
+                // Ignored: categories use soft-delete (archived flag).
+                // Deleting the Firestore document does not imply archiving locally —
+                // archived is the single source of truth for visibility.
+            }
         }
     }
 
