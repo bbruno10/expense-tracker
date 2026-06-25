@@ -133,6 +133,9 @@ dependencies {
     // Splash Screen
     implementation("androidx.core:core-splashscreen:1.0.1")
 
+    // Lottie
+    implementation(libs.lottie.compose)
+
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
