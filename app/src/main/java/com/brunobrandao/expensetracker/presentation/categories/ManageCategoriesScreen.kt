@@ -21,9 +21,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -173,41 +177,53 @@ fun ManageCategoriesScreen(
                 }
 
                 !state.showArchived && state.activeCategories.isEmpty() -> {
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn(),
+                        exit = fadeOut()
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("📂", style = MaterialTheme.typography.displayMedium)
-                            Spacer(Modifier.height(12.dp))
-                            Text(
-                                "No categories yet",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                "Tap + to create your first custom category",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("📂", style = MaterialTheme.typography.displayMedium)
+                                Spacer(Modifier.height(12.dp))
+                                Text(
+                                    "No categories yet",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    "Tap + to create your first custom category",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
 
                 state.showArchived && state.archivedCategories.isEmpty() -> {
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn(),
+                        exit = fadeOut()
                     ) {
-                        Text(
-                            "No archived categories",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "No archived categories",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
 
@@ -254,11 +270,10 @@ private fun ActiveCategoryItem(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
-    Card(
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier

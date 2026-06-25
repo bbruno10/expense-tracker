@@ -1,5 +1,8 @@
 package com.brunobrandao.expensetracker.presentation.history
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -257,24 +260,30 @@ fun HistoryScreen(
             ) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
-        } else if (state.transactions.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(R.string.history_empty),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            AnimatedVisibility(
+                visible = state.transactions.isEmpty(),
+                enter = fadeIn(),
+                exit = fadeOut()
             ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.history_empty),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            if (state.transactions.isNotEmpty()) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                 monthGroups.forEach { monthGroup ->
                     // Month Header
                     item(key = "header_${monthGroup.label}") {
@@ -329,6 +338,7 @@ fun HistoryScreen(
                         )
 
                         SwipeToDismissBox(
+                            modifier = Modifier.animateItem(),
                             state = dismissState,
                             backgroundContent = {
                                 Box(
@@ -372,6 +382,7 @@ fun HistoryScreen(
                 }
 
                 item { Spacer(modifier = Modifier.height(16.dp)) }
+            }
             }
         }
     }

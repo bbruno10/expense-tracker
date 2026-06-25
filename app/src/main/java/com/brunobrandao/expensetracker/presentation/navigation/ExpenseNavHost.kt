@@ -5,6 +5,12 @@ import com.brunobrandao.expensetracker.presentation.recurring.EditRecurringScree
 import com.brunobrandao.expensetracker.presentation.recurring.RecurringScreen
 import com.brunobrandao.expensetracker.presentation.settings.SettingsScreen
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -167,7 +173,11 @@ fun ExpenseNavHost(navController: NavHostController) {
                 navController = navController,
                 startDestination = startDestination
             ) {
-                composable(Screen.Login.route) {
+                composable(
+                    route = Screen.Login.route,
+                    enterTransition = { fadeIn(tween(200)) },
+                    exitTransition = { fadeOut(tween(200)) }
+                ) {
                     LoginScreen(
                         onLoginSuccess = {
                             navController.navigate(Screen.Home.route) {
@@ -180,7 +190,13 @@ fun ExpenseNavHost(navController: NavHostController) {
                     )
                 }
 
-                composable(Screen.Signup.route) {
+                composable(
+                    route = Screen.Signup.route,
+                    enterTransition = { slideInHorizontally(tween(300)) { it } + fadeIn(tween(300)) },
+                    exitTransition = { slideOutHorizontally(tween(300)) { -it / 3 } + fadeOut(tween(300)) },
+                    popEnterTransition = { slideInHorizontally(tween(300)) { -it / 3 } + fadeIn(tween(300)) },
+                    popExitTransition = { slideOutHorizontally(tween(300)) { it } + fadeOut(tween(300)) }
+                ) {
                     SignupScreen(
                         onSignupSuccess = {
                             navController.navigate(Screen.Home.route) {
@@ -193,7 +209,11 @@ fun ExpenseNavHost(navController: NavHostController) {
                     )
                 }
 
-                composable(Screen.Home.route) {
+                composable(
+                    route = Screen.Home.route,
+                    enterTransition = { fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.92f, animationSpec = tween(300)) },
+                    exitTransition = { fadeOut(animationSpec = tween(200)) + scaleOut(targetScale = 0.96f, animationSpec = tween(200)) }
+                ) {
                     HomeScreen(
                         onNavigateToHistory = {
                             navController.navigate(Screen.History.route) {
@@ -211,7 +231,13 @@ fun ExpenseNavHost(navController: NavHostController) {
                     )
                 }
 
-                composable(Screen.AddTransaction.route) {
+                composable(
+                    route = Screen.AddTransaction.route,
+                    enterTransition = { slideInHorizontally(tween(300)) { it } + fadeIn(tween(300)) },
+                    exitTransition = { slideOutHorizontally(tween(300)) { -it / 3 } + fadeOut(tween(300)) },
+                    popEnterTransition = { slideInHorizontally(tween(300)) { -it / 3 } + fadeIn(tween(300)) },
+                    popExitTransition = { slideOutHorizontally(tween(300)) { it } + fadeOut(tween(300)) }
+                ) {
                     AddTransactionScreen(
                         onNavigateBack = {
                             navController.popBackStack()
@@ -221,7 +247,11 @@ fun ExpenseNavHost(navController: NavHostController) {
 
                 composable(
                     route = Screen.EditTransaction.route,
-                    arguments = listOf(navArgument("transactionId") { type = NavType.LongType })
+                    arguments = listOf(navArgument("transactionId") { type = NavType.LongType }),
+                    enterTransition = { slideInHorizontally(tween(300)) { it } + fadeIn(tween(300)) },
+                    exitTransition = { slideOutHorizontally(tween(300)) { -it / 3 } + fadeOut(tween(300)) },
+                    popEnterTransition = { slideInHorizontally(tween(300)) { -it / 3 } + fadeIn(tween(300)) },
+                    popExitTransition = { slideOutHorizontally(tween(300)) { it } + fadeOut(tween(300)) }
                 ) { backStackEntry ->
                     val transactionId = backStackEntry.arguments?.getLong("transactionId") ?: 0L
                     AddTransactionScreen(
@@ -232,7 +262,11 @@ fun ExpenseNavHost(navController: NavHostController) {
                     )
                 }
 
-                composable(Screen.History.route) {
+                composable(
+                    route = Screen.History.route,
+                    enterTransition = { fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.92f, animationSpec = tween(300)) },
+                    exitTransition = { fadeOut(animationSpec = tween(200)) + scaleOut(targetScale = 0.96f, animationSpec = tween(200)) }
+                ) {
                     HistoryScreen(
                         onNavigateBack = {
                             navController.popBackStack()
@@ -243,7 +277,11 @@ fun ExpenseNavHost(navController: NavHostController) {
                     )
                 }
 
-                composable(Screen.Chart.route) {
+                composable(
+                    route = Screen.Chart.route,
+                    enterTransition = { fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.92f, animationSpec = tween(300)) },
+                    exitTransition = { fadeOut(animationSpec = tween(200)) + scaleOut(targetScale = 0.96f, animationSpec = tween(200)) }
+                ) {
                     ChartScreen(
                         onNavigateBack = {
                             navController.popBackStack()
@@ -251,7 +289,11 @@ fun ExpenseNavHost(navController: NavHostController) {
                     )
                 }
 
-                composable(Screen.Settings.route) {
+                composable(
+                    route = Screen.Settings.route,
+                    enterTransition = { fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.92f, animationSpec = tween(300)) },
+                    exitTransition = { fadeOut(animationSpec = tween(200)) + scaleOut(targetScale = 0.96f, animationSpec = tween(200)) }
+                ) {
                     SettingsScreen(
                         onSignOut = {
                             authViewModel.signOut()
@@ -273,13 +315,25 @@ fun ExpenseNavHost(navController: NavHostController) {
                     )
                 }
 
-                composable(Screen.ManageCategories.route) {
+                composable(
+                    route = Screen.ManageCategories.route,
+                    enterTransition = { slideInHorizontally(tween(300)) { it } + fadeIn(tween(300)) },
+                    exitTransition = { slideOutHorizontally(tween(300)) { -it / 3 } + fadeOut(tween(300)) },
+                    popEnterTransition = { slideInHorizontally(tween(300)) { -it / 3 } + fadeIn(tween(300)) },
+                    popExitTransition = { slideOutHorizontally(tween(300)) { it } + fadeOut(tween(300)) }
+                ) {
                     ManageCategoriesScreen(
                         onNavigateBack = { navController.popBackStack() }
                     )
                 }
 
-                composable(Screen.Recurring.route) {
+                composable(
+                    route = Screen.Recurring.route,
+                    enterTransition = { slideInHorizontally(tween(300)) { it } + fadeIn(tween(300)) },
+                    exitTransition = { slideOutHorizontally(tween(300)) { -it / 3 } + fadeOut(tween(300)) },
+                    popEnterTransition = { slideInHorizontally(tween(300)) { -it / 3 } + fadeIn(tween(300)) },
+                    popExitTransition = { slideOutHorizontally(tween(300)) { it } + fadeOut(tween(300)) }
+                ) {
                     RecurringScreen(
                         onNavigateBack = { navController.popBackStack() },
                         onNavigateToAdd = { navController.navigate(Screen.AddTransaction.route) },
@@ -289,7 +343,11 @@ fun ExpenseNavHost(navController: NavHostController) {
 
                 composable(
                     route = Screen.EditRecurring.route,
-                    arguments = listOf(navArgument("recurringId") { type = NavType.LongType })
+                    arguments = listOf(navArgument("recurringId") { type = NavType.LongType }),
+                    enterTransition = { slideInHorizontally(tween(300)) { it } + fadeIn(tween(300)) },
+                    exitTransition = { slideOutHorizontally(tween(300)) { -it / 3 } + fadeOut(tween(300)) },
+                    popEnterTransition = { slideInHorizontally(tween(300)) { -it / 3 } + fadeIn(tween(300)) },
+                    popExitTransition = { slideOutHorizontally(tween(300)) { it } + fadeOut(tween(300)) }
                 ) { backStackEntry ->
                     val recurringId = backStackEntry.arguments?.getLong("recurringId") ?: 0L
                     EditRecurringScreen(
