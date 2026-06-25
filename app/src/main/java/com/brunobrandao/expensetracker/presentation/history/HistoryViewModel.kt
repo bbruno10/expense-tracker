@@ -2,6 +2,8 @@ package com.brunobrandao.expensetracker.presentation.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.brunobrandao.expensetracker.data.sync.SyncRepository
+import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.usecase.DeleteTransactionUseCase
 import com.brunobrandao.expensetracker.domain.usecase.GetTransactionsUseCase
@@ -19,7 +21,9 @@ import javax.inject.Inject
 class HistoryViewModel @Inject constructor(
     private val getTransactions: GetTransactionsUseCase,
     private val deleteTransaction: DeleteTransactionUseCase,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val authRepository: AuthRepository,
+    private val syncRepository: SyncRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HistoryUiState())
@@ -58,7 +62,12 @@ class HistoryViewModel @Inject constructor(
             }
             is HistoryEvent.DeleteTransaction -> {
                 viewModelScope.launch {
-                    deleteTransaction(event.id)
+                    val userId = authRepository.currentUserId
+                    if (userId != null) {
+                        syncRepository.syncDelete(event.id, userId)
+                    } else {
+                        deleteTransaction(event.id)
+                    }
                 }
             }
         }
