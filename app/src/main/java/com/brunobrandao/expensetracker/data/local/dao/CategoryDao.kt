@@ -48,6 +48,9 @@ interface CategoryDao {
     @Query("UPDATE categories SET synced = 1 WHERE `key` = :key")
     suspend fun markSynced(key: String)
 
+    @Query("DELETE FROM categories WHERE isDefault = 0")
+    suspend fun deleteCustomCategories()
+
     @Query("DELETE FROM categories")
     suspend fun deleteAll()
 }

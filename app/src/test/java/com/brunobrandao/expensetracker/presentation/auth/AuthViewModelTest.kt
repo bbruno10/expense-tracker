@@ -1,15 +1,13 @@
 package com.brunobrandao.expensetracker.presentation.auth
 
-import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
-import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -24,7 +22,6 @@ class AuthViewModelTest {
 
     private lateinit var authRepository: AuthRepository
     private lateinit var syncRepository: SyncRepository
-    private lateinit var preferencesRepository: UserPreferencesRepository
     private lateinit var viewModel: AuthViewModel
 
     @Before
@@ -32,9 +29,8 @@ class AuthViewModelTest {
         Dispatchers.setMain(testDispatcher)
         authRepository = mockk(relaxed = true)
         syncRepository = mockk(relaxed = true)
-        preferencesRepository = mockk(relaxed = true)
         every { authRepository.currentUserId } returns "user-1"
-        viewModel = AuthViewModel(authRepository, syncRepository, preferencesRepository)
+        viewModel = AuthViewModel(authRepository, syncRepository)
     }
 
     @After
@@ -43,26 +39,21 @@ class AuthViewModelTest {
     }
 
     @Test
-    fun `signOut clears currency AFTER signing out of auth`() = runTest {
+    fun `signOut stops listeners and delegates cleanup to SyncRepository`() = runTest {
         viewModel.signOut()
-        advanceUntilIdle()
 
-        coVerifyOrder {
-            authRepository.signOut()
-            preferencesRepository.clearCurrency()
-        }
+        verify(exactly = 1) { syncRepository.stopSync() }
+        verify(exactly = 1) { syncRepository.signOutAndCleanup("user-1") }
     }
 
     @Test
-    fun `signOut clears currency even when userId is null`() = runTest {
+    fun `signOut calls authRepository signOut directly when no session`() = runTest {
         every { authRepository.currentUserId } returns null
 
         viewModel.signOut()
-        advanceUntilIdle()
 
-        coVerifyOrder {
-            authRepository.signOut()
-            preferencesRepository.clearCurrency()
-        }
+        verify(exactly = 1) { syncRepository.stopSync() }
+        verify(exactly = 0) { syncRepository.signOutAndCleanup(any()) }
+        verify(exactly = 1) { authRepository.signOut() }
     }
 }
