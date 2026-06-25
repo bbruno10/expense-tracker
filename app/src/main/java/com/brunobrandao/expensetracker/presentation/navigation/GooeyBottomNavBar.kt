@@ -36,9 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 
-// GreenPrimary #1D9E75 — a cor canônica do indicador líquido
-private val GooeyGreen = Color(0xFF1D9E75)
-
 // Mapeia o índice do item na lista (0-4) para a posição do slot no nav (0-4).
 // Índice 2 é o FAB central (nunca selecionável), então:
 //   item 0 → slot 0 | item 1 → slot 1 | item 3 → slot 3 | item 4 → slot 4
@@ -150,6 +147,7 @@ private fun GooeyBlobAPI31(
     blurPx: Float,
     modifier: Modifier = Modifier
 ) {
+    val blobColor = MaterialTheme.colorScheme.primary
     val gooeyEffect = remember(blurPx) {
         val blur = android.graphics.RenderEffect.createBlurEffect(
             blurPx, blurPx, android.graphics.Shader.TileMode.DECAL
@@ -180,7 +178,7 @@ private fun GooeyBlobAPI31(
     ) {
         val slotWidth = size.width / 5f
         drawCircle(
-            color = GooeyGreen,
+            color = blobColor,
             radius = slotWidth * 0.38f,
             center = Offset(x = (animatedSlot + 0.5f) * slotWidth, y = size.height / 2f)
         )
@@ -193,10 +191,11 @@ private fun SimpleIndicator(
     animatedSlot: Float,
     modifier: Modifier = Modifier
 ) {
+    val blobColor = MaterialTheme.colorScheme.primary
     Canvas(modifier = modifier.fillMaxSize()) {
         val slotWidth = size.width / 5f
         drawCircle(
-            color = GooeyGreen,
+            color = blobColor,
             radius = slotWidth * 0.35f,
             center = Offset(x = (animatedSlot + 0.5f) * slotWidth, y = size.height / 2f)
         )

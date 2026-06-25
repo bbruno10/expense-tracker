@@ -44,15 +44,11 @@ import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.presentation.home.TransactionDetailDialog
 import com.brunobrandao.expensetracker.presentation.home.TransactionItem
 import com.brunobrandao.expensetracker.presentation.util.CurrencyFormatter
-import com.brunobrandao.expensetracker.ui.theme.CardGreen
+import com.brunobrandao.expensetracker.ui.theme.LocalFinanceColors
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-
-private val GreenPrimary = Color(0xFF1D9E75)
-private val IncomeGreen = Color(0xFF43A047)
-private val ExpenseRed = Color(0xFFE53935)
 
 private val monthYearFormat = SimpleDateFormat("MMMM yyyy", Locale.US)
 
@@ -76,6 +72,7 @@ fun HistoryScreen(
     var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
     var pendingDeleteTransaction by remember { mutableStateOf<Transaction?>(null) }
     var pendingSwipeDeleteTransaction by remember { mutableStateOf<Transaction?>(null) }
+    val financeColors = LocalFinanceColors.current
 
     // Detail Dialog
     detailTransaction?.let { transaction ->
@@ -100,7 +97,7 @@ fun HistoryScreen(
                         onEditTransaction(transaction.id)
                     }
                 ) {
-                    Text(stringResource(R.string.home_dialog_edit), color = CardGreen, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.home_dialog_edit), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
@@ -110,7 +107,7 @@ fun HistoryScreen(
                         selectedTransaction = null
                     }
                 ) {
-                    Text(stringResource(R.string.home_dialog_delete), color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.home_dialog_delete), color = financeColors.expense, fontWeight = FontWeight.SemiBold)
                 }
             }
         )
@@ -129,7 +126,7 @@ fun HistoryScreen(
                         pendingDeleteTransaction = null
                     }
                 ) {
-                    Text(stringResource(R.string.home_dialog_confirm), color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.home_dialog_confirm), color = financeColors.expense, fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
@@ -153,7 +150,7 @@ fun HistoryScreen(
                         pendingSwipeDeleteTransaction = null
                     }
                 ) {
-                    Text(stringResource(R.string.home_dialog_confirm), color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.home_dialog_confirm), color = financeColors.expense, fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
@@ -217,7 +214,7 @@ fun HistoryScreen(
                     },
                     label = { Text(stringResource(R.string.history_filter_all), style = MaterialTheme.typography.labelSmall) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = GreenPrimary,
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
                         selectedLabelColor = Color.White
                     )
                 )
@@ -258,7 +255,7 @@ fun HistoryScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = GreenPrimary)
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else if (state.transactions.isEmpty()) {
             Box(
@@ -302,7 +299,7 @@ fun HistoryScreen(
                                         text = "+ ${CurrencyFormatter.format(monthGroup.totalIncome, state.currency)}",
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Medium,
-                                        color = IncomeGreen
+                                        color = financeColors.income
                                     )
                                 }
                                 if (monthGroup.totalExpense > 0) {
@@ -310,7 +307,7 @@ fun HistoryScreen(
                                         text = "- ${CurrencyFormatter.format(monthGroup.totalExpense, state.currency)}",
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Medium,
-                                        color = ExpenseRed
+                                        color = financeColors.expense
                                     )
                                 }
                             }
@@ -342,7 +339,7 @@ fun HistoryScreen(
                                 ) {
                                     Text(
                                         text = stringResource(R.string.home_dialog_delete),
-                                        color = ExpenseRed,
+                                        color = financeColors.expense,
                                         fontWeight = FontWeight.SemiBold,
                                         modifier = Modifier.padding(end = 16.dp)
                                     )
