@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -67,12 +66,10 @@ import com.brunobrandao.expensetracker.ui.theme.CardGreen
 import com.brunobrandao.expensetracker.ui.theme.CardGreenDark
 import com.brunobrandao.expensetracker.ui.theme.CardRed
 import com.brunobrandao.expensetracker.ui.theme.CardRedDark
-import com.brunobrandao.expensetracker.ui.theme.ExpenseRed
-import com.brunobrandao.expensetracker.ui.theme.IncomeGreen
+import com.brunobrandao.expensetracker.ui.theme.LocalFinanceColors
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-
 
 
 @Composable
@@ -83,6 +80,7 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val isNegative = state.balance < 0
+    val financeColors = LocalFinanceColors.current
     var detailTransaction by remember { mutableStateOf<Transaction?>(null) }
     var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
     var pendingDeleteTransaction by remember { mutableStateOf<Transaction?>(null) }
@@ -121,7 +119,7 @@ fun HomeScreen(
                         onEditTransaction(transaction.id)
                     }
                 ) {
-                    Text(stringResource(R.string.home_dialog_edit), color = CardGreen, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.home_dialog_edit), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
@@ -131,7 +129,7 @@ fun HomeScreen(
                         selectedTransaction = null
                     }
                 ) {
-                    Text(stringResource(R.string.home_dialog_delete), color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.home_dialog_delete), color = financeColors.expense, fontWeight = FontWeight.SemiBold)
                 }
             }
         )
@@ -150,7 +148,7 @@ fun HomeScreen(
                         pendingDeleteTransaction = null
                     }
                 ) {
-                    Text(stringResource(R.string.home_dialog_confirm), color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.home_dialog_confirm), color = financeColors.expense, fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
@@ -209,7 +207,7 @@ fun HomeScreen(
                             onClick = { viewModel.onPeriodChanged(period) },
                             label = { Text(period.label) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = CardGreen,
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
                                 selectedLabelColor = Color.White
                             )
                         )
@@ -232,9 +230,9 @@ fun HomeScreen(
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(
-                            containerColor = ExpenseRed.copy(alpha = 0.08f)
+                            containerColor = financeColors.expense.copy(alpha = 0.08f)
                         )
                     ) {
                         Row(
@@ -246,14 +244,14 @@ fun HomeScreen(
                             Icon(
                                 Icons.Default.TrendingDown,
                                 contentDescription = null,
-                                tint = ExpenseRed,
+                                tint = financeColors.expense,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = stringResource(R.string.home_negative_balance_warning),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = ExpenseRed
+                                color = financeColors.expense
                             )
                         }
                     }
@@ -330,7 +328,7 @@ fun PeriodNavigator(
             Icon(
                 Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                 contentDescription = stringResource(R.string.home_previous_period),
-                tint = CardGreen
+                tint = MaterialTheme.colorScheme.primary
             )
         }
         Text(
@@ -346,7 +344,7 @@ fun PeriodNavigator(
             Icon(
                 Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = stringResource(R.string.home_next_period),
-                tint = if (canGoNext) CardGreen else Color.Gray.copy(alpha = 0.3f)
+                tint = if (canGoNext) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.3f)
             )
         }
     }
@@ -374,7 +372,7 @@ private fun BalanceCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Box(
@@ -423,7 +421,7 @@ private fun BalanceCard(
                     // Income box
                     Card(
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(14.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(
                             containerColor = Color.White.copy(alpha = 0.15f)
                         )
@@ -465,7 +463,7 @@ private fun BalanceCard(
                     // Expense box
                     Card(
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(14.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(
                             containerColor = Color.White.copy(alpha = 0.15f)
                         )
@@ -520,6 +518,7 @@ fun TransactionItem(
 ) {
     val category = categoriesMap[transaction.category] ?: DefaultCategories.fallback(transaction.category)
     val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy") }
+    val financeColors = LocalFinanceColors.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -531,7 +530,7 @@ fun TransactionItem(
                     )
                 else Modifier
             ),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
@@ -550,12 +549,12 @@ fun TransactionItem(
                 Box(
                     modifier = Modifier
                         .size(44.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(MaterialTheme.shapes.medium)
                         .background(
                             if (transaction.type == TransactionType.INCOME)
-                                IncomeGreen.copy(alpha = 0.1f)
+                                financeColors.income.copy(alpha = 0.1f)
                             else
-                                ExpenseRed.copy(alpha = 0.1f)
+                                financeColors.expense.copy(alpha = 0.1f)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -596,7 +595,7 @@ fun TransactionItem(
                 text = "${if (transaction.type == TransactionType.INCOME) "+" else "-"} ${CurrencyFormatter.format(transaction.amount, currency)}",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = if (transaction.type == TransactionType.INCOME) IncomeGreen else ExpenseRed
+                color = if (transaction.type == TransactionType.INCOME) financeColors.income else financeColors.expense
             )
         }
     }
@@ -616,6 +615,7 @@ fun TransactionDetailDialog(
         .toLocalDate()
         .format(formatter)
     val isIncome = transaction.type == TransactionType.INCOME
+    val financeColors = LocalFinanceColors.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -634,7 +634,7 @@ fun TransactionDetailDialog(
                     text = "${if (isIncome) "+" else "-"} ${CurrencyFormatter.format(transaction.amount, currency)}",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = if (isIncome) IncomeGreen else ExpenseRed
+                    color = if (isIncome) financeColors.income else financeColors.expense
                 )
                 DetailRow(label = "Category", value = "${category.icon} ${category.name}")
                 DetailRow(label = "Date", value = dateStr)

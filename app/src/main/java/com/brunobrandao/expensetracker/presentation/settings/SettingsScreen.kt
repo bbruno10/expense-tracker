@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -66,7 +65,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brunobrandao.expensetracker.data.preferences.Currency
 import com.brunobrandao.expensetracker.data.preferences.ThemeMode
 
-private val GreenPrimary = Color(0xFF1D9E75)
 
 @Composable
 fun SettingsScreen(
@@ -147,7 +145,7 @@ fun SettingsScreen(
                 TextButton(
                     onClick = { viewModel.onEvent(SettingsEvent.ToggleAboutDialog) }
                 ) {
-                    Text(stringResource(R.string.settings_close), color = GreenPrimary)
+                    Text(stringResource(R.string.settings_close), color = MaterialTheme.colorScheme.primary)
                 }
             }
         )
@@ -293,7 +291,7 @@ private fun SectionHeader(title: String) {
         text = title,
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold,
-        color = GreenPrimary,
+        color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
     )
 }
@@ -306,7 +304,7 @@ private fun SettingsCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(14.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -335,7 +333,7 @@ private fun SettingsItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = GreenPrimary,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(16.dp))
@@ -395,14 +393,14 @@ private fun SelectionDialog(
                             text = option,
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = if (index == selectedIndex) FontWeight.SemiBold else FontWeight.Normal,
-                            color = if (index == selectedIndex) GreenPrimary else MaterialTheme.colorScheme.onSurface,
+                            color = if (index == selectedIndex) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f)
                         )
                         if (index == selectedIndex) {
                             Icon(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = "Selected",
-                                tint = GreenPrimary,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                         }

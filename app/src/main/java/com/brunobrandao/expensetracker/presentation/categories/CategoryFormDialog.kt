@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -26,11 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
-private val GreenPrimary = Color(0xFF1D9E75)
 
 /**
  * Dumb composable: receives all state as parameters, exposes callbacks.
@@ -74,9 +70,9 @@ fun CategoryFormDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = GreenPrimary,
-                        focusedLabelColor = GreenPrimary,
-                        cursorColor = GreenPrimary
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        cursorColor = MaterialTheme.colorScheme.primary
                     )
                 )
 
@@ -95,14 +91,14 @@ fun CategoryFormDialog(
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(MaterialTheme.shapes.small)
                                 .background(
                                     if (isSelected) selectedColor.lightColor
                                     else MaterialTheme.colorScheme.surfaceVariant
                                 )
                                 .then(
                                     if (isSelected) Modifier.border(
-                                        1.5.dp, selectedColor.color, RoundedCornerShape(8.dp)
+                                        1.5.dp, selectedColor.color, MaterialTheme.shapes.small
                                     ) else Modifier
                                 )
                                 .clickable { onIconChange(emoji) },
@@ -145,7 +141,7 @@ fun CategoryFormDialog(
         confirmButton = {
             Button(
                 onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text("Save")
             }

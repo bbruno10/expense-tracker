@@ -56,7 +56,6 @@ import com.brunobrandao.expensetracker.presentation.history.HistoryScreen
 import com.brunobrandao.expensetracker.presentation.home.HomeScreen
 import com.brunobrandao.expensetracker.presentation.home.HomeViewModel
 
-private val GreenPrimary = Color(0xFF1D9E75)
 private val AlertRedBackground = Color(0xFFFFF0F0)
 
 data class BottomNavItem(
@@ -135,7 +134,7 @@ fun ExpenseNavHost(navController: NavHostController) {
                             },
                             modifier = Modifier.size(56.dp),
                             shape = CircleShape,
-                            containerColor = GreenPrimary,
+                            containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = Color.White,
                             elevation = FloatingActionButtonDefaults.elevation(
                                 defaultElevation = 6.dp
@@ -151,7 +150,7 @@ fun ExpenseNavHost(navController: NavHostController) {
                             text = "Add",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = GreenPrimary,
+                            color = MaterialTheme.colorScheme.primary,
                             fontSize = 10.sp
                         )
                     }

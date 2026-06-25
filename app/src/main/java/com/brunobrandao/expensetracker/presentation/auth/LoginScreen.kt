@@ -44,8 +44,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
-private val GreenPrimary = Color(0xFF1D9E75)
-
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
@@ -66,7 +64,7 @@ fun LoginScreen(
             text = "Welcome Back",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = GreenPrimary
+            color = MaterialTheme.colorScheme.primary
         )
         Text(
             text = "Sign in to continue",
@@ -87,9 +85,9 @@ fun LoginScreen(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = GreenPrimary,
-                focusedLabelColor = GreenPrimary,
-                focusedLeadingIconColor = GreenPrimary
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                focusedLeadingIconColor = MaterialTheme.colorScheme.primary
             )
         )
 
@@ -117,9 +115,9 @@ fun LoginScreen(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = GreenPrimary,
-                focusedLabelColor = GreenPrimary,
-                focusedLeadingIconColor = GreenPrimary
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                focusedLeadingIconColor = MaterialTheme.colorScheme.primary
             )
         )
 
@@ -143,7 +141,7 @@ fun LoginScreen(
                 .fillMaxWidth()
                 .height(50.dp),
             enabled = !state.isLoading,
-            colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             if (state.isLoading) {
                 CircularProgressIndicator(
@@ -161,7 +159,7 @@ fun LoginScreen(
         TextButton(onClick = onNavigateToSignup) {
             Text(
                 text = "Don't have an account? Create one",
-                color = GreenPrimary
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }

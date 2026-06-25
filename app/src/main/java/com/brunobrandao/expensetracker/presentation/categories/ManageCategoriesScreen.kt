@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -56,8 +55,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brunobrandao.expensetracker.domain.model.Category
-
-private val GreenPrimary = Color(0xFF1D9E75)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -128,7 +125,7 @@ fun ManageCategoriesScreen(
             if (!state.showArchived) {
                 FloatingActionButton(
                     onClick = { viewModel.onEvent(ManageCategoriesEvent.ShowCreateDialog) },
-                    containerColor = GreenPrimary,
+                    containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = Color.White,
                     shape = CircleShape
                 ) {
@@ -153,7 +150,7 @@ fun ManageCategoriesScreen(
                     onClick = { if (state.showArchived) viewModel.onEvent(ManageCategoriesEvent.ToggleShowArchived) },
                     label = { Text("Active") },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = GreenPrimary,
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
                         selectedLabelColor = Color.White
                     )
                 )
@@ -162,7 +159,7 @@ fun ManageCategoriesScreen(
                     onClick = { if (!state.showArchived) viewModel.onEvent(ManageCategoriesEvent.ToggleShowArchived) },
                     label = { Text("Archived (${state.archivedCategories.size})") },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = GreenPrimary,
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
                         selectedLabelColor = Color.White
                     )
                 )
@@ -171,7 +168,7 @@ fun ManageCategoriesScreen(
             when {
                 state.isLoading -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = GreenPrimary)
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 }
 
@@ -259,7 +256,7 @@ private fun ActiveCategoryItem(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -273,7 +270,7 @@ private fun ActiveCategoryItem(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(MaterialTheme.shapes.small)
                     .background(category.lightColor),
                 contentAlignment = Alignment.Center
             ) {
@@ -336,7 +333,7 @@ private fun ArchivedCategoryItem(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
@@ -351,7 +348,7 @@ private fun ArchivedCategoryItem(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(MaterialTheme.shapes.small)
                     .background(category.lightColor.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) {
@@ -380,7 +377,7 @@ private fun ArchivedCategoryItem(
             }
 
             TextButton(onClick = onUnarchive) {
-                Text("Unarchive", color = GreenPrimary, fontWeight = FontWeight.SemiBold)
+                Text("Unarchive", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -390,7 +387,7 @@ private fun ArchivedCategoryItem(
 private fun DefaultBadge() {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
+            .clip(MaterialTheme.shapes.extraSmall)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {

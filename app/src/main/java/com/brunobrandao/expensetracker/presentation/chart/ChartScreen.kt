@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -55,11 +54,8 @@ import com.brunobrandao.expensetracker.domain.model.DefaultCategories
 import com.brunobrandao.expensetracker.presentation.home.PeriodNavigator
 import com.brunobrandao.expensetracker.presentation.home.TimePeriod
 import com.brunobrandao.expensetracker.presentation.util.CurrencyFormatter
+import com.brunobrandao.expensetracker.ui.theme.LocalFinanceColors
 import java.util.Locale
-
-private val GreenPrimary = Color(0xFF1D9E75)
-private val ExpenseRed = Color(0xFFE24B4A)
-
 
 @Composable
 fun ChartScreen(
@@ -77,7 +73,7 @@ fun ChartScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(color = GreenPrimary)
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
     } else {
         LazyColumn(
@@ -108,7 +104,7 @@ fun ChartScreen(
                             onClick = { viewModel.onPeriodChanged(period) },
                             label = { Text(period.label, style = MaterialTheme.typography.labelSmall) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = GreenPrimary,
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
                                 selectedLabelColor = Color.White
                             )
                         )
@@ -148,7 +144,7 @@ fun ChartScreen(
                 item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = MaterialTheme.shapes.medium,
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
@@ -173,7 +169,7 @@ fun ChartScreen(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = MaterialTheme.shapes.medium,
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
@@ -215,7 +211,7 @@ fun ChartScreen(
                                 text = CurrencyFormatter.format(state.totalExpenses, state.currency),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = ExpenseRed
+                                color = LocalFinanceColors.current.expense
                             )
                         }
                     }
@@ -355,14 +351,14 @@ private fun BarChartRow(
             modifier = Modifier
                 .weight(1f)
                 .height(26.dp)
-                .clip(RoundedCornerShape(6.dp))
+                .clip(MaterialTheme.shapes.extraSmall)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(progress)
                     .height(26.dp)
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(MaterialTheme.shapes.extraSmall)
                     .background(category.color),
                 contentAlignment = Alignment.CenterStart
             ) {

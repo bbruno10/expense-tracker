@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -66,14 +65,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.presentation.categories.CategoryFormDialog
+import com.brunobrandao.expensetracker.ui.theme.LocalFinanceColors
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-
-private val GreenPrimary = Color(0xFF1D9E75)
-private val RedExpense = Color(0xFFE53935)
-private val GreenIncome = Color(0xFF43A047)
 
 private val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US)
 private val recurringDateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US).also {
@@ -92,8 +88,8 @@ fun AddTransactionScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartDatePicker by remember { mutableStateOf(false) }
+    val financeColors = LocalFinanceColors.current
 
-    // Load transaction for editing
     LaunchedEffect(transactionId) {
         if (transactionId > 0L) {
             viewModel.loadTransaction(transactionId)
@@ -113,7 +109,6 @@ fun AddTransactionScreen(
         }
     }
 
-    // Start Date Picker (for Repeat)
     if (showStartDatePicker) {
         val startDatePickerState = rememberDatePickerState(
             initialSelectedDateMillis = state.repeatStartDate
@@ -128,7 +123,7 @@ fun AddTransactionScreen(
                         }
                         showStartDatePicker = false
                     }
-                ) { Text("Confirm", color = GreenPrimary) }
+                ) { Text("Confirm", color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = {
                 TextButton(onClick = { showStartDatePicker = false }) { Text("Cancel") }
@@ -136,7 +131,6 @@ fun AddTransactionScreen(
         ) { DatePicker(state = startDatePickerState) }
     }
 
-    // Date Picker Dialog
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = state.date
@@ -152,7 +146,7 @@ fun AddTransactionScreen(
                         showDatePicker = false
                     }
                 ) {
-                    Text("Confirm", color = GreenPrimary)
+                    Text("Confirm", color = MaterialTheme.colorScheme.primary)
                 }
             },
             dismissButton = {
@@ -212,7 +206,6 @@ fun AddTransactionScreen(
         ) {
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Type: Income / Expense
             Text(
                 text = "Type",
                 style = MaterialTheme.typography.titleSmall,
@@ -225,7 +218,7 @@ fun AddTransactionScreen(
                 TypeButton(
                     label = "Expense",
                     isSelected = state.type == TransactionType.EXPENSE,
-                    color = RedExpense,
+                    color = financeColors.expense,
                     modifier = Modifier.weight(1f),
                     onClick = {
                         viewModel.onEvent(AddTransactionEvent.TypeChanged(TransactionType.EXPENSE))
@@ -234,7 +227,7 @@ fun AddTransactionScreen(
                 TypeButton(
                     label = "Income",
                     isSelected = state.type == TransactionType.INCOME,
-                    color = GreenIncome,
+                    color = financeColors.income,
                     modifier = Modifier.weight(1f),
                     onClick = {
                         viewModel.onEvent(AddTransactionEvent.TypeChanged(TransactionType.INCOME))
@@ -242,7 +235,6 @@ fun AddTransactionScreen(
                 )
             }
 
-            // Description
             OutlinedTextField(
                 value = state.description,
                 onValueChange = {
@@ -253,13 +245,12 @@ fun AddTransactionScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = GreenPrimary,
-                    focusedLabelColor = GreenPrimary,
-                    cursorColor = GreenPrimary
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    cursorColor = MaterialTheme.colorScheme.primary
                 )
             )
 
-            // Amount
             OutlinedTextField(
                 value = state.amount,
                 onValueChange = {
@@ -271,13 +262,12 @@ fun AddTransactionScreen(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = GreenPrimary,
-                    focusedLabelColor = GreenPrimary,
-                    cursorColor = GreenPrimary
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    cursorColor = MaterialTheme.colorScheme.primary
                 )
             )
 
-            // Date Selector — hidden when repeat is on (Start date takes its place)
             if (!state.repeatEnabled) {
                 Text(
                     text = "Date",
@@ -288,11 +278,11 @@ fun AddTransactionScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(MaterialTheme.shapes.medium)
                         .border(
                             1.dp,
                             MaterialTheme.colorScheme.outlineVariant,
-                            RoundedCornerShape(12.dp)
+                            MaterialTheme.shapes.medium
                         )
                         .clickable { showDatePicker = true }
                         .padding(horizontal = 16.dp),
@@ -311,14 +301,13 @@ fun AddTransactionScreen(
                         Icon(
                             Icons.Default.CalendarMonth,
                             contentDescription = "Select date",
-                            tint = GreenPrimary,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
                     }
                 }
             }
 
-            // Category
             Text(
                 text = "Category",
                 style = MaterialTheme.typography.titleSmall,
@@ -336,12 +325,11 @@ fun AddTransactionScreen(
                         },
                         label = { Text("${category.icon} ${category.name}") },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = GreenPrimary.copy(alpha = 0.15f),
-                            selectedLabelColor = GreenPrimary
+                            selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            selectedLabelColor = MaterialTheme.colorScheme.primary
                         )
                     )
                 }
-                // + New category chip
                 FilterChip(
                     selected = false,
                     onClick = { viewModel.onEvent(AddTransactionEvent.ShowNewCategoryDialog) },
@@ -353,7 +341,6 @@ fun AddTransactionScreen(
                 )
             }
 
-            // Note (optional)
             OutlinedTextField(
                 value = state.note,
                 onValueChange = {
@@ -365,13 +352,12 @@ fun AddTransactionScreen(
                 minLines = 2,
                 maxLines = 4,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = GreenPrimary,
-                    focusedLabelColor = GreenPrimary,
-                    cursorColor = GreenPrimary
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    cursorColor = MaterialTheme.colorScheme.primary
                 )
             )
 
-            // ── Repeat (only in create mode) ──────────────────────────────
             if (transactionId == 0L) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
@@ -395,12 +381,14 @@ fun AddTransactionScreen(
                     Switch(
                         checked = state.repeatEnabled,
                         onCheckedChange = { viewModel.onEvent(AddTransactionEvent.RepeatToggled) },
-                        colors = SwitchDefaults.colors(checkedThumbColor = GreenPrimary, checkedTrackColor = GreenPrimary.copy(alpha = 0.4f))
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.primary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                        )
                     )
                 }
 
                 if (state.repeatEnabled) {
-                    // Frequency selector
                     Text(
                         text = "Frequency",
                         style = MaterialTheme.typography.titleSmall,
@@ -415,14 +403,13 @@ fun AddTransactionScreen(
                                     Text(freq.name.lowercase().replaceFirstChar { it.uppercase() })
                                 },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GreenPrimary.copy(alpha = 0.15f),
-                                    selectedLabelColor = GreenPrimary
+                                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                    selectedLabelColor = MaterialTheme.colorScheme.primary
                                 )
                             )
                         }
                     }
 
-                    // Start date selector
                     Text(
                         text = "Start date",
                         style = MaterialTheme.typography.titleSmall,
@@ -432,8 +419,8 @@ fun AddTransactionScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.medium)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
                             .clickable { showStartDatePicker = true }
                             .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.CenterStart
@@ -447,7 +434,7 @@ fun AddTransactionScreen(
                                 text = recurringDateFormat.format(Date(state.repeatStartDate)),
                                 style = MaterialTheme.typography.bodyLarge
                             )
-                            Icon(Icons.Default.CalendarMonth, contentDescription = "Select start date", tint = GreenPrimary, modifier = Modifier.size(24.dp))
+                            Icon(Icons.Default.CalendarMonth, contentDescription = "Select start date", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                         }
                     }
                 }
@@ -457,15 +444,14 @@ fun AddTransactionScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Save Button
             Button(
                 onClick = { viewModel.onEvent(AddTransactionEvent.Save) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
                 enabled = !state.isLoading,
-                colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
-                shape = RoundedCornerShape(14.dp)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                shape = MaterialTheme.shapes.medium
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(
@@ -497,19 +483,19 @@ private fun TypeButton(
     Box(
         modifier = modifier
             .height(48.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .then(
                 if (isSelected) {
                     Modifier
                         .background(color.copy(alpha = 0.12f))
-                        .border(1.5.dp, color, RoundedCornerShape(12.dp))
+                        .border(1.5.dp, color, MaterialTheme.shapes.medium)
                 } else {
                     Modifier
                         .background(MaterialTheme.colorScheme.surfaceContainerLow)
                         .border(
                             1.dp,
                             MaterialTheme.colorScheme.outlineVariant,
-                            RoundedCornerShape(12.dp)
+                            MaterialTheme.shapes.medium
                         )
                 }
             )

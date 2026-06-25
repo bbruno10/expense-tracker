@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -41,14 +40,11 @@ import com.brunobrandao.expensetracker.data.preferences.Currency
 import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.presentation.util.CurrencyFormatter
+import com.brunobrandao.expensetracker.ui.theme.LocalFinanceColors
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-
-private val GreenPrimary = Color(0xFF1D9E75)
-private val IncomeGreen = Color(0xFF43A047)
-private val ExpenseRed = Color(0xFFE53935)
 
 private val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US).also {
     it.timeZone = TimeZone.getTimeZone("UTC")
@@ -79,7 +75,7 @@ fun RecurringScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNavigateToAdd,
-                containerColor = GreenPrimary,
+                containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add recurring")
@@ -131,15 +127,16 @@ private fun RecurringRuleItem(
     onClick: () -> Unit,
     currency: Currency = Currency.USD
 ) {
+    val financeColors = LocalFinanceColors.current
     val isIncome = rule.type == TransactionType.INCOME
-    val amountColor = if (isIncome) IncomeGreen else ExpenseRed
+    val amountColor = if (isIncome) financeColors.income else financeColors.expense
     val amountSign = if (isIncome) "+" else "-"
     val frequencyLabel = rule.frequency.name.lowercase().replaceFirstChar { it.uppercase() }
 
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
@@ -177,8 +174,8 @@ private fun RecurringRuleItem(
                 checked = rule.active,
                 onCheckedChange = onActiveChanged,
                 colors = SwitchDefaults.colors(
-                    checkedThumbColor = GreenPrimary,
-                    checkedTrackColor = GreenPrimary.copy(alpha = 0.4f)
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
                 )
             )
         }

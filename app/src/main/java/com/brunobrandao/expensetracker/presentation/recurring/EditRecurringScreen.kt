@@ -17,9 +17,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -66,14 +65,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.TransactionType
+import com.brunobrandao.expensetracker.ui.theme.LocalFinanceColors
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-
-private val GreenPrimary = Color(0xFF1D9E75)
-private val RedExpense = Color(0xFFE53935)
-private val GreenIncome = Color(0xFF43A047)
 
 private val dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US).also {
     it.timeZone = TimeZone.getTimeZone("UTC")
@@ -91,6 +87,7 @@ fun EditRecurringScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showNextDatePicker by remember { mutableStateOf(false) }
+    val financeColors = LocalFinanceColors.current
 
     LaunchedEffect(recurringId) { viewModel.load(recurringId) }
 
@@ -119,7 +116,7 @@ fun EditRecurringScreen(
                         }
                         showNextDatePicker = false
                     }
-                ) { Text("Confirm", color = GreenPrimary) }
+                ) { Text("Confirm", color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = {
                 TextButton(onClick = { showNextDatePicker = false }) { Text("Cancel") }
@@ -136,7 +133,7 @@ fun EditRecurringScreen(
                 TextButton(onClick = {
                     showDeleteConfirm = false
                     viewModel.onEvent(EditRecurringEvent.Delete)
-                }) { Text("Delete", color = RedExpense, fontWeight = FontWeight.SemiBold) }
+                }) { Text("Delete", color = financeColors.expense, fontWeight = FontWeight.SemiBold) }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
@@ -156,7 +153,7 @@ fun EditRecurringScreen(
                 },
                 actions = {
                     IconButton(onClick = { showDeleteConfirm = true }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete rule", tint = RedExpense)
+                        Icon(Icons.Default.Delete, contentDescription = "Delete rule", tint = financeColors.expense)
                     }
                 }
             )
@@ -179,14 +176,14 @@ fun EditRecurringScreen(
                 TypeButton(
                     label = "Expense",
                     isSelected = state.type == TransactionType.EXPENSE,
-                    color = RedExpense,
+                    color = financeColors.expense,
                     modifier = Modifier.weight(1f),
                     onClick = { viewModel.onEvent(EditRecurringEvent.TypeChanged(TransactionType.EXPENSE)) }
                 )
                 TypeButton(
                     label = "Income",
                     isSelected = state.type == TransactionType.INCOME,
-                    color = GreenIncome,
+                    color = financeColors.income,
                     modifier = Modifier.weight(1f),
                     onClick = { viewModel.onEvent(EditRecurringEvent.TypeChanged(TransactionType.INCOME)) }
                 )
@@ -199,7 +196,7 @@ fun EditRecurringScreen(
                 label = { Text("Description") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GreenPrimary, focusedLabelColor = GreenPrimary, cursorColor = GreenPrimary)
+                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.primary, focusedLabelColor = MaterialTheme.colorScheme.primary, cursorColor = MaterialTheme.colorScheme.primary)
             )
 
             // Amount
@@ -211,7 +208,7 @@ fun EditRecurringScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GreenPrimary, focusedLabelColor = GreenPrimary, cursorColor = GreenPrimary)
+                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.primary, focusedLabelColor = MaterialTheme.colorScheme.primary, cursorColor = MaterialTheme.colorScheme.primary)
             )
 
             // Frequency
@@ -223,8 +220,8 @@ fun EditRecurringScreen(
                         onClick = { viewModel.onEvent(EditRecurringEvent.FrequencyChanged(freq)) },
                         label = { Text(freq.name.lowercase().replaceFirstChar { it.uppercase() }) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = GreenPrimary.copy(alpha = 0.15f),
-                            selectedLabelColor = GreenPrimary
+                            selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            selectedLabelColor = MaterialTheme.colorScheme.primary
                         )
                     )
                 }
@@ -239,8 +236,8 @@ fun EditRecurringScreen(
                         onClick = { viewModel.onEvent(EditRecurringEvent.CategoryChanged(category.key)) },
                         label = { Text("${category.icon} ${category.name}") },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = GreenPrimary.copy(alpha = 0.15f),
-                            selectedLabelColor = GreenPrimary
+                            selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            selectedLabelColor = MaterialTheme.colorScheme.primary
                         )
                     )
                 }
@@ -254,7 +251,7 @@ fun EditRecurringScreen(
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
                 maxLines = 4,
-                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GreenPrimary, focusedLabelColor = GreenPrimary, cursorColor = GreenPrimary)
+                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.primary, focusedLabelColor = MaterialTheme.colorScheme.primary, cursorColor = MaterialTheme.colorScheme.primary)
             )
 
             // Active
@@ -263,7 +260,7 @@ fun EditRecurringScreen(
                 Switch(
                     checked = state.active,
                     onCheckedChange = { viewModel.onEvent(EditRecurringEvent.ActiveChanged(it)) },
-                    colors = SwitchDefaults.colors(checkedThumbColor = GreenPrimary, checkedTrackColor = GreenPrimary.copy(alpha = 0.4f))
+                    colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary, checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
                 )
             }
 
@@ -274,8 +271,8 @@ fun EditRecurringScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                        .clip(MaterialTheme.shapes.medium)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
                         .clickable { showNextDatePicker = true }
                         .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.CenterStart
@@ -289,7 +286,7 @@ fun EditRecurringScreen(
                             text = dateFormat.format(Date(state.nextDueDate)),
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        Icon(Icons.Default.CalendarMonth, contentDescription = "Select next due date", tint = GreenPrimary, modifier = Modifier.size(24.dp))
+                        Icon(Icons.Default.CalendarMonth, contentDescription = "Select next due date", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                     }
                 }
             }
@@ -300,8 +297,8 @@ fun EditRecurringScreen(
                 onClick = { viewModel.onEvent(EditRecurringEvent.Save) },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 enabled = !state.isLoading,
-                colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
-                shape = RoundedCornerShape(14.dp)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                shape = MaterialTheme.shapes.medium
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.padding(4.dp))
@@ -320,10 +317,10 @@ private fun TypeButton(label: String, isSelected: Boolean, color: Color, modifie
     Box(
         modifier = modifier
             .height(48.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .then(
-                if (isSelected) Modifier.background(color.copy(alpha = 0.12f)).border(1.5.dp, color, RoundedCornerShape(12.dp))
-                else Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow).border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                if (isSelected) Modifier.background(color.copy(alpha = 0.12f)).border(1.5.dp, color, MaterialTheme.shapes.medium)
+                else Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow).border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
             )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center

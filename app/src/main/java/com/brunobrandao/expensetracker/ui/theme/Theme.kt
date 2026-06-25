@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -69,6 +70,7 @@ fun ExpenseTrackerTheme(
 ) {
     val isDark = darkTheme ?: isSystemInDarkTheme()
     val colorScheme = if (isDark) DarkColorScheme else LightColorScheme
+    val financeColors = financeColorsForTheme(isDark)
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -79,9 +81,12 @@ fun ExpenseTrackerTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(LocalFinanceColors provides financeColors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            shapes = AppShapes,
+            content = content
+        )
+    }
 }
