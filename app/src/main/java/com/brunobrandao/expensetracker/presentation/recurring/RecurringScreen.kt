@@ -14,8 +14,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -82,39 +85,48 @@ fun RecurringScreen(
             }
         }
     ) { padding ->
-        if (rules.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 32.dp),
-                contentAlignment = Alignment.Center
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            AnimatedVisibility(
+                visible = rules.isEmpty(),
+                enter = fadeIn(),
+                exit = fadeOut()
             ) {
-                Text(
-                    text = "No recurring expenses yet.\nAdd one from the Add screen using Repeat.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                item { Spacer(modifier = Modifier.height(4.dp)) }
-                items(rules, key = { it.id }) { rule ->
-                    RecurringRuleItem(
-                        rule = rule,
-                        onActiveChanged = { active -> viewModel.setActive(rule.id, active) },
-                        onClick = { onEditRule(rule.id) },
-                        currency = currency
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No recurring expenses yet.\nAdd one from the Add screen using Repeat.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
                 }
-                item { Spacer(modifier = Modifier.height(80.dp)) }
+            }
+            if (rules.isNotEmpty()) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    item { Spacer(modifier = Modifier.height(4.dp)) }
+                    items(rules, key = { it.id }) { rule ->
+                        RecurringRuleItem(
+                            rule = rule,
+                            onActiveChanged = { active -> viewModel.setActive(rule.id, active) },
+                            onClick = { onEditRule(rule.id) },
+                            currency = currency
+                        )
+                    }
+                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                }
             }
         }
     }
@@ -133,11 +145,11 @@ private fun RecurringRuleItem(
     val amountSign = if (isIncome) "+" else "-"
     val frequencyLabel = rule.frequency.name.lowercase().replaceFirstChar { it.uppercase() }
 
-    Card(
+    ElevatedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier

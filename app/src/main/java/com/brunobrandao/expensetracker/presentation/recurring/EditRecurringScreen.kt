@@ -26,6 +26,9 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -172,21 +175,27 @@ fun EditRecurringScreen(
 
             // Type
             Text("Type", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                TypeButton(
-                    label = "Expense",
-                    isSelected = state.type == TransactionType.EXPENSE,
-                    color = financeColors.expense,
-                    modifier = Modifier.weight(1f),
-                    onClick = { viewModel.onEvent(EditRecurringEvent.TypeChanged(TransactionType.EXPENSE)) }
-                )
-                TypeButton(
-                    label = "Income",
-                    isSelected = state.type == TransactionType.INCOME,
-                    color = financeColors.income,
-                    modifier = Modifier.weight(1f),
-                    onClick = { viewModel.onEvent(EditRecurringEvent.TypeChanged(TransactionType.INCOME)) }
-                )
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                SegmentedButton(
+                    selected = state.type == TransactionType.EXPENSE,
+                    onClick = { viewModel.onEvent(EditRecurringEvent.TypeChanged(TransactionType.EXPENSE)) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                    colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = financeColors.expense.copy(alpha = 0.12f),
+                        activeContentColor = financeColors.expense,
+                        activeBorderColor = financeColors.expense
+                    )
+                ) { Text("Expense") }
+                SegmentedButton(
+                    selected = state.type == TransactionType.INCOME,
+                    onClick = { viewModel.onEvent(EditRecurringEvent.TypeChanged(TransactionType.INCOME)) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                    colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = financeColors.income.copy(alpha = 0.12f),
+                        activeContentColor = financeColors.income,
+                        activeBorderColor = financeColors.income
+                    )
+                ) { Text("Income") }
             }
 
             // Description
@@ -312,24 +321,3 @@ fun EditRecurringScreen(
     }
 }
 
-@Composable
-private fun TypeButton(label: String, isSelected: Boolean, color: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Box(
-        modifier = modifier
-            .height(48.dp)
-            .clip(MaterialTheme.shapes.medium)
-            .then(
-                if (isSelected) Modifier.background(color.copy(alpha = 0.12f)).border(1.5.dp, color, MaterialTheme.shapes.medium)
-                else Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow).border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
-            )
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (isSelected) color else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}

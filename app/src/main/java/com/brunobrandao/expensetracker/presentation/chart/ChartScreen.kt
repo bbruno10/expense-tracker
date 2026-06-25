@@ -1,7 +1,10 @@
 package com.brunobrandao.expensetracker.presentation.chart
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -18,13 +21,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -122,9 +124,12 @@ fun ChartScreen(
                 )
             }
 
-            if (state.expensesByCategory.isEmpty()) {
-                // Empty state message
-                item {
+            item {
+                AnimatedVisibility(
+                    visible = state.expensesByCategory.isEmpty(),
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -139,14 +144,14 @@ fun ChartScreen(
                         )
                     }
                 }
-            } else {
+            }
+            if (state.expensesByCategory.isNotEmpty()) {
                 // Donut Chart Card with Legend
                 item {
-                Card(
+                ElevatedCard(
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Text(
@@ -167,11 +172,10 @@ fun ChartScreen(
 
             // Bar Chart Breakdown Card
             item {
-                Card(
+                ElevatedCard(
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Text(
@@ -334,6 +338,11 @@ private fun BarChartRow(
     currency: Currency
 ) {
     val progress = (amount / maxAmount).toFloat().coerceIn(0f, 1f)
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(600),
+        label = "bar_${category.key}"
+    )
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -356,13 +365,13 @@ private fun BarChartRow(
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(progress)
+                    .fillMaxWidth(animatedProgress)
                     .height(26.dp)
                     .clip(MaterialTheme.shapes.extraSmall)
                     .background(category.color),
                 contentAlignment = Alignment.CenterStart
             ) {
-                if (progress > 0.2f) {
+                if (animatedProgress > 0.2f) {
                     Text(
                         text = CurrencyFormatter.formatCompact(amount, currency),
                         style = MaterialTheme.typography.labelSmall,
@@ -374,7 +383,7 @@ private fun BarChartRow(
                 }
             }
             // Show value outside bar if bar is too small
-            if (progress <= 0.2f) {
+            if (animatedProgress <= 0.2f) {
                 Text(
                     text = CurrencyFormatter.formatCompact(amount, currency),
                     style = MaterialTheme.typography.labelSmall,
@@ -382,7 +391,7 @@ private fun BarChartRow(
                     color = category.color,
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .padding(start = (progress * 200 + 8).dp.coerceAtLeast(8.dp)),
+                        .padding(start = (animatedProgress * 200 + 8).dp.coerceAtLeast(8.dp)),
                     maxLines = 1
                 )
             }

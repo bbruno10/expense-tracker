@@ -28,9 +28,13 @@ import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.AlertDialog
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -280,8 +284,12 @@ fun HomeScreen(
             }
 
             // Transaction List
-            if (state.recentTransactions.isEmpty()) {
-                item {
+            item {
+                AnimatedVisibility(
+                    visible = state.recentTransactions.isEmpty(),
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -295,16 +303,15 @@ fun HomeScreen(
                         )
                     }
                 }
-            } else {
-                items(state.recentTransactions, key = { it.id }) { transaction ->
-                    TransactionItem(
-                        transaction = transaction,
-                        categoriesMap = state.categoriesMap,
-                        onClick = { detailTransaction = transaction },
-                        onLongClick = { selectedTransaction = transaction },
-                        currency = state.currency
-                    )
-                }
+            }
+            items(state.recentTransactions, key = { it.id }) { transaction ->
+                TransactionItem(
+                    transaction = transaction,
+                    categoriesMap = state.categoriesMap,
+                    onClick = { detailTransaction = transaction },
+                    onLongClick = { selectedTransaction = transaction },
+                    currency = state.currency
+                )
             }
 
             item { Spacer(modifier = Modifier.height(80.dp)) }
@@ -519,7 +526,7 @@ fun TransactionItem(
     val category = categoriesMap[transaction.category] ?: DefaultCategories.fallback(transaction.category)
     val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy") }
     val financeColors = LocalFinanceColors.current
-    Card(
+    ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
             .then(
@@ -531,9 +538,7 @@ fun TransactionItem(
                 else Modifier
             ),
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
