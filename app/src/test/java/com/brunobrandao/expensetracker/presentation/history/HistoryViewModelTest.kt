@@ -1,5 +1,7 @@
 package com.brunobrandao.expensetracker.presentation.history
 
+import com.brunobrandao.expensetracker.data.preferences.UserPreferences
+import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
@@ -30,6 +32,7 @@ class HistoryViewModelTest {
     private lateinit var categoryRepository: CategoryRepository
     private lateinit var authRepository: AuthRepository
     private lateinit var syncRepository: SyncRepository
+    private lateinit var preferencesRepository: UserPreferencesRepository
     private lateinit var viewModel: HistoryViewModel
 
     @Before
@@ -40,11 +43,13 @@ class HistoryViewModelTest {
         categoryRepository = mockk(relaxed = true)
         authRepository = mockk(relaxed = true)
         syncRepository = mockk(relaxed = true)
+        preferencesRepository = mockk(relaxed = true)
         every { getTransactions() } returns flowOf(emptyList())
         every { categoryRepository.observeCategories() } returns flowOf(emptyList())
         every { authRepository.currentUserId } returns "user-1"
+        every { preferencesRepository.userPreferences } returns flowOf(UserPreferences())
         viewModel = HistoryViewModel(
-            getTransactions, deleteTransaction, categoryRepository, authRepository, syncRepository
+            getTransactions, deleteTransaction, categoryRepository, authRepository, syncRepository, preferencesRepository
         )
     }
 

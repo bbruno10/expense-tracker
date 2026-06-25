@@ -57,6 +57,7 @@ import androidx.compose.ui.res.stringResource
 import com.brunobrandao.expensetracker.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.brunobrandao.expensetracker.data.preferences.Currency
 import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.DefaultCategories
 import com.brunobrandao.expensetracker.domain.model.Transaction
@@ -95,7 +96,8 @@ fun HomeScreen(
         TransactionDetailDialog(
             transaction = transaction,
             categoriesMap = state.categoriesMap,
-            onDismiss = { detailTransaction = null }
+            onDismiss = { detailTransaction = null },
+            currency = state.currency
         )
     }
 
@@ -190,7 +192,8 @@ fun HomeScreen(
                     balance = state.balance,
                     income = state.totalIncome,
                     expense = state.totalExpense,
-                    isNegative = isNegative
+                    isNegative = isNegative,
+                    currency = state.currency
                 )
             }
 
@@ -300,7 +303,8 @@ fun HomeScreen(
                         transaction = transaction,
                         categoriesMap = state.categoriesMap,
                         onClick = { detailTransaction = transaction },
-                        onLongClick = { selectedTransaction = transaction }
+                        onLongClick = { selectedTransaction = transaction },
+                        currency = state.currency
                     )
                 }
             }
@@ -353,7 +357,8 @@ private fun BalanceCard(
     balance: Double,
     income: Double,
     expense: Double,
-    isNegative: Boolean
+    isNegative: Boolean,
+    currency: Currency
 ) {
 
     val gradientStart by animateColorAsState(
@@ -405,7 +410,7 @@ private fun BalanceCard(
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = CurrencyFormatter.format(balance),
+                    text = CurrencyFormatter.format(balance, currency),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -449,7 +454,7 @@ private fun BalanceCard(
                                     color = Color.White.copy(alpha = 0.7f)
                                 )
                                 Text(
-                                    text = CurrencyFormatter.format(income),
+                                    text = CurrencyFormatter.format(income, currency),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color.White
@@ -491,7 +496,7 @@ private fun BalanceCard(
                                     color = Color.White.copy(alpha = 0.7f)
                                 )
                                 Text(
-                                    text = CurrencyFormatter.format(expense),
+                                    text = CurrencyFormatter.format(expense, currency),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color.White
@@ -510,7 +515,8 @@ fun TransactionItem(
     transaction: Transaction,
     categoriesMap: Map<String, Category> = emptyMap(),
     onClick: (() -> Unit)? = null,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    currency: Currency = Currency.USD
 ) {
     val category = categoriesMap[transaction.category] ?: DefaultCategories.fallback(transaction.category)
     val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy") }
@@ -587,7 +593,7 @@ fun TransactionItem(
                 }
             }
             Text(
-                text = "${if (transaction.type == TransactionType.INCOME) "+" else "-"} ${CurrencyFormatter.format(transaction.amount)}",
+                text = "${if (transaction.type == TransactionType.INCOME) "+" else "-"} ${CurrencyFormatter.format(transaction.amount, currency)}",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = if (transaction.type == TransactionType.INCOME) IncomeGreen else ExpenseRed
@@ -600,7 +606,8 @@ fun TransactionItem(
 fun TransactionDetailDialog(
     transaction: Transaction,
     categoriesMap: Map<String, Category> = emptyMap(),
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    currency: Currency = Currency.USD
 ) {
     val category = categoriesMap[transaction.category] ?: DefaultCategories.fallback(transaction.category)
     val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy") }
@@ -624,7 +631,7 @@ fun TransactionDetailDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "${if (isIncome) "+" else "-"} ${CurrencyFormatter.format(transaction.amount)}",
+                    text = "${if (isIncome) "+" else "-"} ${CurrencyFormatter.format(transaction.amount, currency)}",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = if (isIncome) IncomeGreen else ExpenseRed

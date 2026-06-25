@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.brunobrandao.expensetracker.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.brunobrandao.expensetracker.data.preferences.Currency
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.presentation.home.TransactionDetailDialog
@@ -81,7 +82,8 @@ fun HistoryScreen(
         TransactionDetailDialog(
             transaction = transaction,
             categoriesMap = categoriesMap,
-            onDismiss = { detailTransaction = null }
+            onDismiss = { detailTransaction = null },
+            currency = state.currency
         )
     }
 
@@ -297,7 +299,7 @@ fun HistoryScreen(
                             ) {
                                 if (monthGroup.totalIncome > 0) {
                                     Text(
-                                        text = "+ ${CurrencyFormatter.format(monthGroup.totalIncome)}",
+                                        text = "+ ${CurrencyFormatter.format(monthGroup.totalIncome, state.currency)}",
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Medium,
                                         color = IncomeGreen
@@ -305,7 +307,7 @@ fun HistoryScreen(
                                 }
                                 if (monthGroup.totalExpense > 0) {
                                     Text(
-                                        text = "- ${CurrencyFormatter.format(monthGroup.totalExpense)}",
+                                        text = "- ${CurrencyFormatter.format(monthGroup.totalExpense, state.currency)}",
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Medium,
                                         color = ExpenseRed
@@ -352,7 +354,8 @@ fun HistoryScreen(
                                 transaction = transaction,
                                 categoriesMap = categoriesMap,
                                 onClick = { detailTransaction = transaction },
-                                onLongClick = { selectedTransaction = transaction }
+                                onLongClick = { selectedTransaction = transaction },
+                                currency = state.currency
                             )
                         }
                     }

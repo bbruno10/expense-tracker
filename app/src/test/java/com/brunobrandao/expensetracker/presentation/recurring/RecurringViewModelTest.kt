@@ -1,5 +1,7 @@
 package com.brunobrandao.expensetracker.presentation.recurring
 
+import com.brunobrandao.expensetracker.data.preferences.UserPreferences
+import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
@@ -25,6 +27,7 @@ class RecurringViewModelTest {
     private lateinit var recurringRepository: RecurringTransactionRepository
     private lateinit var syncRepository: SyncRepository
     private lateinit var authRepository: AuthRepository
+    private lateinit var preferencesRepository: UserPreferencesRepository
     private lateinit var viewModel: RecurringViewModel
 
     @Before
@@ -33,9 +36,11 @@ class RecurringViewModelTest {
         recurringRepository = mockk(relaxed = true)
         syncRepository = mockk(relaxed = true)
         authRepository = mockk(relaxed = true)
+        preferencesRepository = mockk(relaxed = true)
         every { authRepository.currentUserId } returns null
         every { recurringRepository.observeAll() } returns flowOf(emptyList())
-        viewModel = RecurringViewModel(recurringRepository, syncRepository, authRepository)
+        every { preferencesRepository.userPreferences } returns flowOf(UserPreferences())
+        viewModel = RecurringViewModel(recurringRepository, syncRepository, authRepository, preferencesRepository)
     }
 
     @After

@@ -1,5 +1,6 @@
 package com.brunobrandao.expensetracker.presentation.history
 
+import com.brunobrandao.expensetracker.data.preferences.Currency
 import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
@@ -9,7 +10,8 @@ data class HistoryUiState(
     val filterType: TransactionType? = null,
     val filterCategory: String? = null,
     val categories: List<Category> = emptyList(),
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val currency: Currency = Currency.USD
 )
 
 sealed interface HistoryEvent {

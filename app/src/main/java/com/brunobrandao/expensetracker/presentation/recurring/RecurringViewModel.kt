@@ -2,6 +2,8 @@ package com.brunobrandao.expensetracker.presentation.recurring
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.brunobrandao.expensetracker.data.preferences.Currency
+import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
@@ -9,6 +11,7 @@ import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRep
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -17,7 +20,8 @@ import javax.inject.Inject
 class RecurringViewModel @Inject constructor(
     private val recurringRepository: RecurringTransactionRepository,
     private val syncRepository: SyncRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val preferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     val rules: StateFlow<List<RecurringTransaction>> = recurringRepository.observeAll()
@@ -25,6 +29,14 @@ class RecurringViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
+        )
+
+    val currency: StateFlow<Currency> = preferencesRepository.userPreferences
+        .map { it.currency }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = Currency.USD
         )
 
     fun setActive(id: Long, active: Boolean) {

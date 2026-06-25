@@ -1,5 +1,6 @@
 package com.brunobrandao.expensetracker.presentation.home
 
+import com.brunobrandao.expensetracker.data.preferences.Currency
 import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.Transaction
 
@@ -19,5 +20,6 @@ data class HomeUiState(
     val periodOffset: Int = 0,
     val periodLabel: String = "",
     val canGoNext: Boolean = false,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val currency: Currency = Currency.USD
 )

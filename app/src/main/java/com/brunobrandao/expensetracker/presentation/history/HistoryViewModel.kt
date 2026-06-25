@@ -2,6 +2,7 @@ package com.brunobrandao.expensetracker.presentation.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
@@ -23,7 +24,8 @@ class HistoryViewModel @Inject constructor(
     private val deleteTransaction: DeleteTransactionUseCase,
     private val categoryRepository: CategoryRepository,
     private val authRepository: AuthRepository,
-    private val syncRepository: SyncRepository
+    private val syncRepository: SyncRepository,
+    private val preferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HistoryUiState())
@@ -34,6 +36,9 @@ class HistoryViewModel @Inject constructor(
         categoryRepository.observeCategories().onEach { cats ->
             _uiState.update { it.copy(categories = cats) }
         }.launchIn(viewModelScope)
+        preferencesRepository.userPreferences
+            .onEach { prefs -> _uiState.update { it.copy(currency = prefs.currency) } }
+            .launchIn(viewModelScope)
     }
 
     private fun observeTransactions() {

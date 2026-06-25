@@ -49,6 +49,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brunobrandao.expensetracker.R
+import com.brunobrandao.expensetracker.data.preferences.Currency
 import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.DefaultCategories
 import com.brunobrandao.expensetracker.presentation.home.PeriodNavigator
@@ -161,7 +162,8 @@ fun ChartScreen(
                         DonutWithLegend(
                             expensesByCategory = state.expensesByCategory,
                             categoriesMap = state.categoriesMap,
-                            totalExpenses = state.totalExpenses
+                            totalExpenses = state.totalExpenses,
+                            currency = state.currency
                         )
                     }
                 }
@@ -189,7 +191,8 @@ fun ChartScreen(
                             BarChartRow(
                                 category = state.categoriesMap[key] ?: DefaultCategories.fallback(key),
                                 amount = amount,
-                                maxAmount = maxAmount
+                                maxAmount = maxAmount,
+                                currency = state.currency
                             )
                             Spacer(modifier = Modifier.height(7.dp))
                         }
@@ -209,7 +212,7 @@ fun ChartScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = CurrencyFormatter.format(state.totalExpenses),
+                                text = CurrencyFormatter.format(state.totalExpenses, state.currency),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = ExpenseRed
@@ -230,7 +233,8 @@ fun ChartScreen(
 private fun DonutWithLegend(
     expensesByCategory: Map<String, Double>,
     categoriesMap: Map<String, Category>,
-    totalExpenses: Double
+    totalExpenses: Double,
+    currency: Currency
 ) {
     var animationPlayed by remember { mutableStateOf(false) }
     val animationProgress by animateFloatAsState(
@@ -275,7 +279,7 @@ private fun DonutWithLegend(
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = CurrencyFormatter.formatCompact(totalExpenses),
+                    text = CurrencyFormatter.formatCompact(totalExpenses, currency),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
@@ -330,7 +334,8 @@ private fun DonutWithLegend(
 private fun BarChartRow(
     category: Category,
     amount: Double,
-    maxAmount: Double
+    maxAmount: Double,
+    currency: Currency
 ) {
     val progress = (amount / maxAmount).toFloat().coerceIn(0f, 1f)
 
@@ -363,7 +368,7 @@ private fun BarChartRow(
             ) {
                 if (progress > 0.2f) {
                     Text(
-                        text = CurrencyFormatter.formatCompact(amount),
+                        text = CurrencyFormatter.formatCompact(amount, currency),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -375,7 +380,7 @@ private fun BarChartRow(
             // Show value outside bar if bar is too small
             if (progress <= 0.2f) {
                 Text(
-                    text = CurrencyFormatter.formatCompact(amount),
+                    text = CurrencyFormatter.formatCompact(amount, currency),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = category.color,
