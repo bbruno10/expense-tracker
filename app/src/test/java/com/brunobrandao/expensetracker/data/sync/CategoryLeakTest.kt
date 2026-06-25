@@ -120,6 +120,20 @@ class CategoryLeakTest {
         coVerify(exactly = 1) { categoryDao.deleteCustomCategories() }
     }
 
+    // ── signOutAndCleanup: after cleanup, only isDefault=true rows remain ────────
+
+    @Test
+    fun `signOutAndCleanup removes custom categories and keeps defaults`() = runTest {
+        // Room contains mixed data; after signOutAndCleanup only defaults should remain.
+        // deleteCustomCategories() enforces this at the DB level (WHERE isDefault=0).
+        sut.signOutAndCleanup("user-a")
+        sut.cleanupJob!!.join()
+
+        // deleteCustomCategories called (removes isDefault=0 rows); deleteAll never called
+        coVerify(exactly = 1) { categoryDao.deleteCustomCategories() }
+        coVerify(exactly = 0) { categoryDao.deleteAll() }
+    }
+
     // ── Transactions and recurring are unaffected ─────────────────────────────
 
     @Test

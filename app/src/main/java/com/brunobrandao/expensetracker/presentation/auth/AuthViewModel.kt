@@ -2,8 +2,6 @@ package com.brunobrandao.expensetracker.presentation.auth
 
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -15,13 +13,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import androidx.lifecycle.viewModelScope
 import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val syncRepository: SyncRepository,
-    private val preferencesRepository: UserPreferencesRepository
+    private val syncRepository: SyncRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -87,20 +85,20 @@ class AuthViewModel @Inject constructor(
     }
 
     /**
-     * Stops the Firestore listener, then in the background:
-     * tries to push any unsynced rows before signing out Firebase Auth.
-     * Room is cleared only if all rows were successfully synced.
-     * If offline, Room is left intact for the next session.
+     * Stops Firestore listeners immediately, then delegates the full cleanup sequence
+     * (push → deleteCustomCategories → clearCurrency → Firebase signOut) to the
+     * SyncRepository's @Singleton scope. That scope outlives this ViewModel, so the
+     * cleanup cannot be interrupted by navigation with popUpTo(0).
+     *
+     * When no active session exists, signOut is called directly (no data to push).
      */
     fun signOut() {
         val userId = authRepository.currentUserId
         syncRepository.stopSync()
-        viewModelScope.launch {
-            if (userId != null) {
-                try { syncRepository.pushPendingAndClear(userId) } catch (_: Exception) {}
-            }
+        if (userId != null) {
+            syncRepository.signOutAndCleanup(userId)
+        } else {
             authRepository.signOut()
-            preferencesRepository.clearCurrency()
         }
     }
 

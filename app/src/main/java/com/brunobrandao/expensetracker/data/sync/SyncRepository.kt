@@ -38,7 +38,8 @@ class SyncRepository @Inject constructor(
     private var listenerRegistration: ListenerRegistration? = null
     private var recurringListenerRegistration: ListenerRegistration? = null
     private var categoryListenerRegistration: ListenerRegistration? = null
-    private var syncJob: Job? = null
+    internal var syncJob: Job? = null
+    internal var cleanupJob: Job? = null
 
     /**
      * Called when the user logs in or when the app starts with an active session.
@@ -57,6 +58,11 @@ class SyncRepository @Inject constructor(
         categoryListenerRegistration = null
 
         syncJob = scope.launch {
+            // Ensures logout cleanup from the previous session (deleteCustomCategories,
+            // clearCurrency, signOut) fully completes before this session's listeners
+            // start writing to Room, closing the logout→login race.
+            cleanupJob?.join()
+
             // ── Currency preference ───────────────────────────────────────────
             preferencesRepository.pullCurrency(userId)?.let { code ->
                 Currency.entries.find { it.code == code }?.let { currency ->
@@ -94,11 +100,12 @@ class SyncRepository @Inject constructor(
 
             // ── Categories ────────────────────────────────────────────────────
             pushUnsyncedCategories(userId)
-        }
 
-        attachListener(userId)
-        attachRecurringListener(userId)
-        attachCategoryListener(userId)
+            // ── Listeners (after cleanup is confirmed done) ───────────────────
+            attachListener(userId)
+            attachRecurringListener(userId)
+            attachCategoryListener(userId)
+        }
     }
 
     /** Removes all Firestore real-time listeners. */
@@ -126,7 +133,7 @@ class SyncRepository @Inject constructor(
      */
     suspend fun pushPendingAndClear(userId: String) {
         // ── Categories: best-effort push, then unconditional custom clear ─────
-        pushUnsyncedCategories(userId)
+        try { pushUnsyncedCategories(userId) } catch (_: Exception) {}
         categoryDao.deleteCustomCategories()
 
         // ── Transactions ─────────────────────────────────────────────────────
@@ -164,6 +171,22 @@ class SyncRepository @Inject constructor(
             }
         }
         if (allRulesSynced) recurringDao.deleteAll()
+    }
+
+    /**
+     * Fire-and-forget logout cleanup that runs in the @Singleton scope, surviving ViewModel
+     * destruction. Sequence: push pending data → delete custom categories → clear currency →
+     * Firebase signOut. signOut is unconditionally last; prior failures are swallowed.
+     *
+     * startSync() joins this job before attaching listeners, preventing the logout→login race
+     * where deleteCustomCategories() would wipe the new user's data.
+     */
+    fun signOutAndCleanup(userId: String) {
+        cleanupJob = scope.launch {
+            try { pushPendingAndClear(userId) } catch (_: Exception) {}
+            try { preferencesRepository.clearCurrency() } catch (_: Exception) {}
+            authRepository.signOut()
+        }
     }
 
     /**
