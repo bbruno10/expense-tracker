@@ -6,14 +6,8 @@ import java.util.Locale
 
 object CurrencyFormatter {
 
-    private var currentCurrency: Currency = Currency.USD
-
-    fun setCurrency(currency: Currency) {
-        currentCurrency = currency
-    }
-
-    fun format(amount: Double): String {
-        val locale = when (currentCurrency) {
+    fun format(amount: Double, currency: Currency): String {
+        val locale = when (currency) {
             Currency.USD -> Locale.US
             Currency.BRL -> Locale("pt", "BR")
             Currency.AUD -> Locale("en", "AU")
@@ -24,12 +18,12 @@ object CurrencyFormatter {
         return NumberFormat.getCurrencyInstance(locale).format(amount)
     }
 
-    fun formatCompact(amount: Double): String {
-        val symbol = currentCurrency.symbol
+    fun formatCompact(amount: Double, currency: Currency): String {
+        val symbol = currency.symbol
         return when {
             amount >= 1_000_000 -> String.format(Locale.US, "%s%.1fM", symbol, amount / 1_000_000)
             amount >= 10_000 -> String.format(Locale.US, "%s%.1fK", symbol, amount / 1_000)
-            else -> format(amount)
+            else -> format(amount, currency)
         }
     }
 }

@@ -2,6 +2,7 @@ package com.brunobrandao.expensetracker.presentation.chart
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.usecase.GetTotalByTypeUseCase
@@ -16,13 +17,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
 class ChartViewModel @Inject constructor(
     private val getTransactionsByDateRange: GetTransactionsByDateRangeUseCase,
     private val getTotalByType: GetTotalByTypeUseCase,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val preferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChartUiState())
@@ -34,6 +37,9 @@ class ChartViewModel @Inject constructor(
 
     init {
         observeData()
+        preferencesRepository.userPreferences
+            .onEach { prefs -> _uiState.update { it.copy(currency = prefs.currency) } }
+            .launchIn(viewModelScope)
     }
 
     fun refresh() {
@@ -88,7 +94,7 @@ class ChartViewModel @Inject constructor(
                 )
             }
         }.onEach { state ->
-            _uiState.value = state
+            _uiState.update { current -> state.copy(currency = current.currency) }
         }.launchIn(viewModelScope)
     }
 }

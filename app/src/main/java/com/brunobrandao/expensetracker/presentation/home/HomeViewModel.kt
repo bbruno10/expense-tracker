@@ -2,6 +2,7 @@ package com.brunobrandao.expensetracker.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -32,7 +34,8 @@ class HomeViewModel @Inject constructor(
     private val deleteTransaction: DeleteTransactionUseCase,
     private val authRepository: AuthRepository,
     private val syncRepository: SyncRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val preferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -44,6 +47,13 @@ class HomeViewModel @Inject constructor(
 
     init {
         observeData()
+        observeCurrency()
+    }
+
+    private fun observeCurrency() {
+        preferencesRepository.userPreferences
+            .onEach { prefs -> _uiState.update { it.copy(currency = prefs.currency) } }
+            .launchIn(viewModelScope)
     }
 
     fun refresh() {
@@ -103,7 +113,7 @@ class HomeViewModel @Inject constructor(
                 )
             }
         }.onEach { state ->
-            _uiState.value = state
+            _uiState.update { current -> state.copy(currency = current.currency) }
         }.launchIn(viewModelScope)
     }
 

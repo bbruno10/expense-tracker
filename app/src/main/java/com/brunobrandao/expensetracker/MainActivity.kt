@@ -23,7 +23,6 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import com.brunobrandao.expensetracker.presentation.navigation.ExpenseNavHost
 import com.brunobrandao.expensetracker.presentation.splash.SplashScreen
-import com.brunobrandao.expensetracker.presentation.util.CurrencyFormatter
 import com.brunobrandao.expensetracker.ui.theme.ExpenseTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -60,10 +59,6 @@ class MainActivity : ComponentActivity() {
             val preferences by preferencesRepository.userPreferences.collectAsState(
                 initial = UserPreferences()
             )
-
-            LaunchedEffect(preferences.currency) {
-                CurrencyFormatter.setCurrency(preferences.currency)
-            }
 
             // Start sync whenever the user is authenticated (app launch or login)
             LaunchedEffect(Unit) {

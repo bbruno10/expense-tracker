@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.brunobrandao.expensetracker.data.preferences.Currency
 import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.presentation.util.CurrencyFormatter
@@ -62,6 +63,7 @@ fun RecurringScreen(
     viewModel: RecurringViewModel = hiltViewModel()
 ) {
     val rules by viewModel.rules.collectAsStateWithLifecycle()
+    val currency by viewModel.currency.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -112,7 +114,8 @@ fun RecurringScreen(
                     RecurringRuleItem(
                         rule = rule,
                         onActiveChanged = { active -> viewModel.setActive(rule.id, active) },
-                        onClick = { onEditRule(rule.id) }
+                        onClick = { onEditRule(rule.id) },
+                        currency = currency
                     )
                 }
                 item { Spacer(modifier = Modifier.height(80.dp)) }
@@ -125,7 +128,8 @@ fun RecurringScreen(
 private fun RecurringRuleItem(
     rule: RecurringTransaction,
     onActiveChanged: (Boolean) -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    currency: Currency = Currency.USD
 ) {
     val isIncome = rule.type == TransactionType.INCOME
     val amountColor = if (isIncome) IncomeGreen else ExpenseRed
@@ -153,7 +157,7 @@ private fun RecurringRuleItem(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "$amountSign ${CurrencyFormatter.format(rule.amount)}",
+                    text = "$amountSign ${CurrencyFormatter.format(rule.amount, currency)}",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = amountColor
