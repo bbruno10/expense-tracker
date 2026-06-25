@@ -1,5 +1,7 @@
 package com.brunobrandao.expensetracker.presentation.categories
 
+import com.brunobrandao.expensetracker.R
+import com.brunobrandao.expensetracker.ui.components.EmptyStateView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -182,27 +184,13 @@ fun ManageCategoriesScreen(
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("📂", style = MaterialTheme.typography.displayMedium)
-                                Spacer(Modifier.height(12.dp))
-                                Text(
-                                    "No categories yet",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    "Tap + to create your first custom category",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
+                        EmptyStateView(
+                            animationRes = R.raw.lottie_empty_generic,
+                            message = "No categories yet\nTap + to create your first custom category",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp, horizontal = 32.dp)
+                        )
                     }
                 }
 
@@ -212,18 +200,13 @@ fun ManageCategoriesScreen(
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                "No archived categories",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        EmptyStateView(
+                            animationRes = R.raw.lottie_empty_generic,
+                            message = "No archived categories",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp, horizontal = 32.dp)
+                        )
                     }
                 }
 

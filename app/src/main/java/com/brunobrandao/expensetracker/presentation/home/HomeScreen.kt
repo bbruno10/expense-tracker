@@ -1,5 +1,6 @@
 package com.brunobrandao.expensetracker.presentation.home
 
+import com.brunobrandao.expensetracker.ui.components.EmptyStateView
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -290,18 +291,13 @@ fun HomeScreen(
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
-                    Box(
+                    EmptyStateView(
+                        animationRes = R.raw.lottie_empty_transactions,
+                        message = stringResource(R.string.home_empty_transactions),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.home_empty_transactions),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                            .padding(vertical = 16.dp, horizontal = 32.dp)
+                    )
                 }
             }
             items(state.recentTransactions, key = { it.id }) { transaction ->

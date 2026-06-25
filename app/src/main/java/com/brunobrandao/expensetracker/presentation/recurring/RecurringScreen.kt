@@ -35,11 +35,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.brunobrandao.expensetracker.R
 import com.brunobrandao.expensetracker.data.preferences.Currency
+import com.brunobrandao.expensetracker.ui.components.EmptyStateView
 import com.brunobrandao.expensetracker.domain.model.RecurringTransaction
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.presentation.util.CurrencyFormatter
@@ -95,19 +96,13 @@ fun RecurringScreen(
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
-                Box(
+                EmptyStateView(
+                    animationRes = R.raw.lottie_empty_generic,
+                    message = "No recurring expenses yet.\nAdd one from the Add screen using Repeat.",
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No recurring expenses yet.\nAdd one from the Add screen using Repeat.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp, horizontal = 32.dp)
+                )
             }
             if (rules.isNotEmpty()) {
                 LazyColumn(

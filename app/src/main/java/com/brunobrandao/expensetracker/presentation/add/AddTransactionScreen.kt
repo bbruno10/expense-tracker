@@ -1,5 +1,6 @@
 package com.brunobrandao.expensetracker.presentation.add
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -58,13 +59,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.brunobrandao.expensetracker.R
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
+import kotlinx.coroutines.delay
 import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.presentation.categories.CategoryFormDialog
 import com.brunobrandao.expensetracker.ui.theme.LocalFinanceColors
@@ -90,6 +97,7 @@ fun AddTransactionScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartDatePicker by remember { mutableStateOf(false) }
+    var showSuccess by remember { mutableStateOf(false) }
     val financeColors = LocalFinanceColors.current
 
     LaunchedEffect(transactionId) {
@@ -100,7 +108,7 @@ fun AddTransactionScreen(
 
     LaunchedEffect(state.isSaved) {
         if (state.isSaved) {
-            onNavigateBack()
+            showSuccess = true
         }
     }
 
@@ -176,6 +184,7 @@ fun AddTransactionScreen(
         )
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -471,5 +480,37 @@ fun AddTransactionScreen(
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
+
+    if (showSuccess) {
+        val successComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_success))
+        val successProgress by animateLottieCompositionAsState(
+            composition = successComposition,
+            iterations = 1,
+            isPlaying = true,
+            restartOnPlay = false
+        )
+        LaunchedEffect(successProgress) {
+            if (successProgress >= 0.99f && successComposition != null) {
+                onNavigateBack()
+            }
+        }
+        LaunchedEffect(Unit) {
+            delay(1500)
+            onNavigateBack()
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f)),
+            contentAlignment = Alignment.Center
+        ) {
+            LottieAnimation(
+                composition = successComposition,
+                progress = { successProgress },
+                modifier = Modifier.size(200.dp)
+            )
+        }
+    }
+    } // closes outer Box
 }
 

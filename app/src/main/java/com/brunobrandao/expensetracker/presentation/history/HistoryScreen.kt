@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.brunobrandao.expensetracker.R
+import com.brunobrandao.expensetracker.ui.components.EmptyStateView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brunobrandao.expensetracker.data.preferences.Currency
@@ -266,16 +267,13 @@ fun HistoryScreen(
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.history_empty),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                EmptyStateView(
+                    animationRes = R.raw.lottie_empty_transactions,
+                    message = stringResource(R.string.history_empty),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 48.dp, horizontal = 32.dp)
+                )
             }
             if (state.transactions.isNotEmpty()) {
                 LazyColumn(

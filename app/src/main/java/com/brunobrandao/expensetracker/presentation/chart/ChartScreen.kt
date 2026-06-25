@@ -44,12 +44,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brunobrandao.expensetracker.R
+import com.brunobrandao.expensetracker.ui.components.EmptyStateView
 import com.brunobrandao.expensetracker.data.preferences.Currency
 import com.brunobrandao.expensetracker.domain.model.Category
 import com.brunobrandao.expensetracker.domain.model.DefaultCategories
@@ -130,19 +130,13 @@ fun ChartScreen(
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
-                    Box(
+                    EmptyStateView(
+                        animationRes = R.raw.lottie_empty_chart,
+                        message = stringResource(R.string.chart_empty_state),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 48.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.chart_empty_state),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    }
+                            .padding(vertical = 32.dp, horizontal = 32.dp)
+                    )
                 }
             }
             if (state.expensesByCategory.isNotEmpty()) {
