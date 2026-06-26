@@ -12,6 +12,7 @@ import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
 import com.brunobrandao.expensetracker.domain.usecase.AddTransactionUseCase
 import com.brunobrandao.expensetracker.domain.usecase.CreateCategoryUseCase
 import com.brunobrandao.expensetracker.domain.usecase.GenerateDueRecurringTransactionsUseCase
+import com.brunobrandao.expensetracker.domain.util.Clock
 import com.brunobrandao.expensetracker.presentation.categories.CATEGORY_COLORS
 import com.brunobrandao.expensetracker.presentation.categories.CategoryFormState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,7 +34,8 @@ class AddTransactionViewModel @Inject constructor(
     private val recurringRepository: RecurringTransactionRepository,
     private val generateDue: GenerateDueRecurringTransactionsUseCase,
     private val categoryRepository: CategoryRepository,
-    private val createCategory: CreateCategoryUseCase
+    private val createCategory: CreateCategoryUseCase,
+    private val clock: Clock
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddTransactionUiState())
@@ -141,6 +143,7 @@ class AddTransactionViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (state.repeatEnabled && !state.isEditing) {
+                    val now = clock.now()
                     val rule = RecurringTransaction(
                         description = state.description.trim(),
                         amount = amount,
@@ -153,7 +156,7 @@ class AddTransactionViewModel @Inject constructor(
                         active = true
                     )
                     val insertedId = recurringRepository.upsert(rule)
-                    generateDue(System.currentTimeMillis())
+                    generateDue(now)
                     authRepository.currentUserId?.let { userId ->
                         try { syncRepository.syncWriteRecurring(insertedId, userId) } catch (_: Exception) {}
                     }
