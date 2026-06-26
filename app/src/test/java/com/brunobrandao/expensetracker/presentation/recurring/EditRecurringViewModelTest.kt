@@ -7,6 +7,7 @@ import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
+import com.brunobrandao.expensetracker.domain.util.Clock
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -30,6 +31,8 @@ import org.junit.Test
 class EditRecurringViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
+    private val fakeNow = 1717200000000L
+    private val fakeClock = Clock { fakeNow }
     private lateinit var recurringRepository: RecurringTransactionRepository
     private lateinit var syncRepository: SyncRepository
     private lateinit var authRepository: AuthRepository
@@ -61,7 +64,7 @@ class EditRecurringViewModelTest {
         categoryRepository = mockk(relaxed = true)
         every { authRepository.currentUserId } returns null
         every { categoryRepository.observeCategories() } returns flowOf(emptyList())
-        viewModel = EditRecurringViewModel(recurringRepository, syncRepository, authRepository, categoryRepository)
+        viewModel = EditRecurringViewModel(recurringRepository, syncRepository, authRepository, categoryRepository, fakeClock)
     }
 
     @After
@@ -86,7 +89,6 @@ class EditRecurringViewModelTest {
         assertEquals(RecurringFrequency.MONTHLY, state.frequency)
         assertTrue(state.active)
         assertEquals(startDate, state.startDate)
-        assertEquals(nextDue, state.nextDueDate)
     }
 
     @Test
@@ -135,21 +137,36 @@ class EditRecurringViewModelTest {
                 rule.description == "Netflix Updated" &&
                 rule.amount == 49.90 &&
                 rule.startDate == startDate &&
-                rule.nextDueDate == nextDue
+                rule.nextDueDate > fakeNow
             })
         }
     }
 
     @Test
-    fun `NextDueDateChanged updates nextDueDate in state`() = runTest {
+    fun `StartDateChanged updates startDate in state`() = runTest {
         coEvery { recurringRepository.getById(1L) } returns sampleRule
         viewModel.load(1L)
         advanceUntilIdle()
 
         val newDate = 1705708800000L
-        viewModel.onEvent(EditRecurringEvent.NextDueDateChanged(newDate))
+        viewModel.onEvent(EditRecurringEvent.StartDateChanged(newDate))
 
-        assertEquals(newDate, viewModel.uiState.value.nextDueDate)
+        assertEquals(newDate, viewModel.uiState.value.startDate)
+    }
+
+    @Test
+    fun `save recalculates nextDueDate strictly after now`() = runTest {
+        coEvery { recurringRepository.getById(1L) } returns sampleRule
+        coEvery { recurringRepository.upsert(any()) } returns 1L
+        viewModel.load(1L)
+        advanceUntilIdle()
+
+        viewModel.onEvent(EditRecurringEvent.Save)
+        advanceUntilIdle()
+
+        coVerify {
+            recurringRepository.upsert(match { rule -> rule.nextDueDate > fakeNow })
+        }
     }
 
     @Test

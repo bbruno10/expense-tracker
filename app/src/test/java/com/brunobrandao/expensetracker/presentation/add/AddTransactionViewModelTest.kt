@@ -72,7 +72,7 @@ class AddTransactionViewModelTest {
         val createCategory = CreateCategoryUseCase(categoryRepo)
         viewModel = AddTransactionViewModel(
             addTransactionUseCase, repository, authRepository, syncRepository,
-            recurringRepository, generateDue, categoryRepo, createCategory
+            recurringRepository, generateDue, categoryRepo, createCategory, fakeClock
         )
     }
 
@@ -388,7 +388,7 @@ class AddTransactionViewModelTest {
     fun `Repeat ON save creates recurring rule via upsert and triggers generateDue`() = runTest {
         coEvery { recurringRepository.upsert(any()) } returns 1L
 
-        val startDate = 1700000000000L
+        val startDate = 1700000000000L  // past date
         viewModel.onEvent(AddTransactionEvent.RepeatToggled)
         viewModel.onEvent(AddTransactionEvent.DescriptionChanged("Netflix"))
         viewModel.onEvent(AddTransactionEvent.AmountChanged("39.90"))
@@ -407,12 +407,62 @@ class AddTransactionViewModelTest {
                 rule.amount == 39.90 &&
                 rule.frequency == RecurringFrequency.MONTHLY &&
                 rule.startDate == startDate &&
-                rule.nextDueDate == startDate &&
+                rule.nextDueDate == startDate &&  // CREATE stores startDate, generateDue advances internally
                 rule.active
             })
         }
-        coVerify { generateDue(any()) }
+        coVerify { generateDue(fakeNow) }
         coVerify(exactly = 0) { addTransactionUseCase(any()) }
+    }
+
+    @Test
+    fun `Repeat ON with startDate today stores nextDueDate as startDate so generateDue can fire`() = runTest {
+        // Regression test for Bug A PASSO 3: nextDueDate must equal startDate on CREATE,
+        // not computeNextDueDate (future), so the generator's WHERE nextDueDate <= now fires.
+        coEvery { recurringRepository.upsert(any()) } returns 1L
+
+        val startDateToday = fakeNow  // startDate == now (clock)
+        viewModel.onEvent(AddTransactionEvent.RepeatToggled)
+        viewModel.onEvent(AddTransactionEvent.DescriptionChanged("Rent"))
+        viewModel.onEvent(AddTransactionEvent.AmountChanged("1200.00"))
+        viewModel.onEvent(AddTransactionEvent.FrequencyChanged(RecurringFrequency.MONTHLY))
+        viewModel.onEvent(AddTransactionEvent.StartDateChanged(startDateToday))
+        viewModel.onEvent(AddTransactionEvent.Save)
+
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isSaved)
+        coVerify {
+            recurringRepository.upsert(match { rule ->
+                rule.startDate == startDateToday &&
+                rule.nextDueDate == startDateToday  // NOT future — generator must see nextDueDate <= now
+            })
+        }
+        coVerify { generateDue(fakeNow) }
+    }
+
+    @Test
+    fun `Repeat ON with future startDate stores nextDueDate as startDate and generateDue is called`() = runTest {
+        coEvery { recurringRepository.upsert(any()) } returns 1L
+
+        val futureStart = fakeNow + 30L * 24 * 60 * 60 * 1000  // 30 days ahead
+        viewModel.onEvent(AddTransactionEvent.RepeatToggled)
+        viewModel.onEvent(AddTransactionEvent.DescriptionChanged("Insurance"))
+        viewModel.onEvent(AddTransactionEvent.AmountChanged("200.00"))
+        viewModel.onEvent(AddTransactionEvent.FrequencyChanged(RecurringFrequency.MONTHLY))
+        viewModel.onEvent(AddTransactionEvent.StartDateChanged(futureStart))
+        viewModel.onEvent(AddTransactionEvent.Save)
+
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isSaved)
+        coVerify {
+            recurringRepository.upsert(match { rule ->
+                rule.startDate == futureStart &&
+                rule.nextDueDate == futureStart  // future — generateDue(now) won't fire since nextDueDate > now
+            })
+        }
+        coVerify { generateDue(fakeNow) }
     }
 
     @Test

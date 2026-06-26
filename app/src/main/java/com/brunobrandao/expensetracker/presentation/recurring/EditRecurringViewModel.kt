@@ -10,6 +10,8 @@ import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
+import com.brunobrandao.expensetracker.domain.util.Clock
+import com.brunobrandao.expensetracker.domain.util.RecurringDateCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,7 +33,6 @@ data class EditRecurringUiState(
     val frequency: RecurringFrequency = RecurringFrequency.MONTHLY,
     val active: Boolean = true,
     val startDate: Long = 0L,
-    val nextDueDate: Long = 0L,
     val isLoading: Boolean = false,
     val isSaved: Boolean = false,
     val isDeleted: Boolean = false,
@@ -47,7 +48,7 @@ sealed interface EditRecurringEvent {
     data class NoteChanged(val value: String) : EditRecurringEvent
     data class FrequencyChanged(val value: RecurringFrequency) : EditRecurringEvent
     data class ActiveChanged(val value: Boolean) : EditRecurringEvent
-    data class NextDueDateChanged(val value: Long) : EditRecurringEvent
+    data class StartDateChanged(val value: Long) : EditRecurringEvent
     data object Save : EditRecurringEvent
     data object Delete : EditRecurringEvent
     data object DismissError : EditRecurringEvent
@@ -58,7 +59,8 @@ class EditRecurringViewModel @Inject constructor(
     private val recurringRepository: RecurringTransactionRepository,
     private val syncRepository: SyncRepository,
     private val authRepository: AuthRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val clock: Clock
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EditRecurringUiState())
@@ -90,8 +92,7 @@ class EditRecurringViewModel @Inject constructor(
                         note = rule.note,
                         frequency = rule.frequency,
                         active = rule.active,
-                        startDate = rule.startDate,
-                        nextDueDate = rule.nextDueDate
+                        startDate = rule.startDate
                     )
                 }
             }
@@ -116,8 +117,8 @@ class EditRecurringViewModel @Inject constructor(
                 _uiState.update { it.copy(frequency = event.value) }
             is EditRecurringEvent.ActiveChanged ->
                 _uiState.update { it.copy(active = event.value) }
-            is EditRecurringEvent.NextDueDateChanged ->
-                _uiState.update { it.copy(nextDueDate = event.value) }
+            is EditRecurringEvent.StartDateChanged ->
+                _uiState.update { it.copy(startDate = event.value) }
             is EditRecurringEvent.Save -> save()
             is EditRecurringEvent.Delete -> delete()
             is EditRecurringEvent.DismissError ->
@@ -149,7 +150,11 @@ class EditRecurringViewModel @Inject constructor(
                         note = state.note.trim(),
                         frequency = state.frequency,
                         startDate = state.startDate,
-                        nextDueDate = state.nextDueDate,
+                        nextDueDate = RecurringDateCalculator.computeNextDueDate(
+                            startDate = state.startDate,
+                            frequency = state.frequency,
+                            now = clock.now()
+                        ),
                         active = state.active
                     )
                 )

@@ -68,6 +68,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.TransactionType
+import com.brunobrandao.expensetracker.domain.util.RecurringDateCalculator
 import com.brunobrandao.expensetracker.ui.theme.LocalFinanceColors
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -89,7 +90,7 @@ fun EditRecurringScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteConfirm by remember { mutableStateOf(false) }
-    var showNextDatePicker by remember { mutableStateOf(false) }
+    var showStartDatePicker by remember { mutableStateOf(false) }
     val financeColors = LocalFinanceColors.current
 
     LaunchedEffect(recurringId) { viewModel.load(recurringId) }
@@ -105,26 +106,26 @@ fun EditRecurringScreen(
         }
     }
 
-    if (showNextDatePicker && state.nextDueDate > 0L) {
-        val nextDatePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = state.nextDueDate
+    if (showStartDatePicker && state.startDate > 0L) {
+        val startDatePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = state.startDate
         )
         DatePickerDialog(
-            onDismissRequest = { showNextDatePicker = false },
+            onDismissRequest = { showStartDatePicker = false },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        nextDatePickerState.selectedDateMillis?.let { millis ->
-                            viewModel.onEvent(EditRecurringEvent.NextDueDateChanged(millis))
+                        startDatePickerState.selectedDateMillis?.let { millis ->
+                            viewModel.onEvent(EditRecurringEvent.StartDateChanged(millis))
                         }
-                        showNextDatePicker = false
+                        showStartDatePicker = false
                     }
                 ) { Text("Confirm", color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = {
-                TextButton(onClick = { showNextDatePicker = false }) { Text("Cancel") }
+                TextButton(onClick = { showStartDatePicker = false }) { Text("Cancel") }
             }
-        ) { DatePicker(state = nextDatePickerState) }
+        ) { DatePicker(state = startDatePickerState) }
     }
 
     if (showDeleteConfirm) {
@@ -273,16 +274,16 @@ fun EditRecurringScreen(
                 )
             }
 
-            // Next due date (editable)
-            if (state.nextDueDate > 0L) {
-                Text("Next due date", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            // Start date (editable)
+            if (state.startDate > 0L) {
+                Text("Start date", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
                         .clip(MaterialTheme.shapes.medium)
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
-                        .clickable { showNextDatePicker = true }
+                        .clickable { showStartDatePicker = true }
                         .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
@@ -292,12 +293,26 @@ fun EditRecurringScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = dateFormat.format(Date(state.nextDueDate)),
+                            text = dateFormat.format(Date(state.startDate)),
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        Icon(Icons.Default.CalendarMonth, contentDescription = "Select next due date", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                        Icon(Icons.Default.CalendarMonth, contentDescription = "Select start date", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                     }
                 }
+
+                // Next occurrence — read-only, always calculated
+                val nextDue = remember(state.startDate, state.frequency) {
+                    RecurringDateCalculator.computeNextDueDate(
+                        startDate = state.startDate,
+                        frequency = state.frequency,
+                        now = System.currentTimeMillis()
+                    )
+                }
+                Text(
+                    text = "Next occurrence: ${dateFormat.format(Date(nextDue))}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))

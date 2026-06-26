@@ -1,10 +1,9 @@
 package com.brunobrandao.expensetracker.domain.usecase
 
-import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
 import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
-import java.time.ZoneOffset
+import com.brunobrandao.expensetracker.domain.util.RecurringDateCalculator
 import javax.inject.Inject
 
 class GenerateDueRecurringTransactionsUseCase @Inject constructor(
@@ -27,21 +26,9 @@ class GenerateDueRecurringTransactionsUseCase @Inject constructor(
                         recurringId = rule.id
                     )
                 )
-                nextDue = advanceDate(nextDue, rule.frequency)
+                nextDue = RecurringDateCalculator.advance(nextDue, rule.frequency)
             }
             recurringRepository.upsert(rule.copy(nextDueDate = nextDue))
         }
-    }
-
-    private fun advanceDate(epochMillis: Long, frequency: RecurringFrequency): Long {
-        val date = java.time.Instant.ofEpochMilli(epochMillis)
-            .atZone(ZoneOffset.UTC)
-            .toLocalDate()
-        val advanced = when (frequency) {
-            RecurringFrequency.WEEKLY  -> date.plusWeeks(1)
-            RecurringFrequency.MONTHLY -> date.plusMonths(1)
-            RecurringFrequency.YEARLY  -> date.plusYears(1)
-        }
-        return advanced.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
     }
 }
