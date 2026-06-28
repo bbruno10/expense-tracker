@@ -34,6 +34,8 @@ interface TransactionRepository {
 
     fun getBalanceByDateRange(startDate: Long, endDate: Long): Flow<Double>
 
+    suspend fun getLatestByRecurringId(recurringId: Long): Transaction?
+
     suspend fun insertTransaction(transaction: Transaction): Long
 
     suspend fun updateTransaction(transaction: Transaction)

@@ -12,6 +12,7 @@ import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
 import com.brunobrandao.expensetracker.domain.usecase.AddTransactionUseCase
 import com.brunobrandao.expensetracker.domain.usecase.CreateCategoryUseCase
 import com.brunobrandao.expensetracker.domain.usecase.GenerateDueRecurringTransactionsUseCase
+import com.brunobrandao.expensetracker.domain.usecase.UpdateRuleFromOccurrenceUseCase
 import com.brunobrandao.expensetracker.domain.util.Clock
 import com.brunobrandao.expensetracker.presentation.categories.CATEGORY_COLORS
 import com.brunobrandao.expensetracker.presentation.categories.CategoryFormState
@@ -35,7 +36,8 @@ class AddTransactionViewModel @Inject constructor(
     private val generateDue: GenerateDueRecurringTransactionsUseCase,
     private val categoryRepository: CategoryRepository,
     private val createCategory: CreateCategoryUseCase,
-    private val clock: Clock
+    private val clock: Clock,
+    private val updateRuleFromOccurrence: UpdateRuleFromOccurrenceUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddTransactionUiState())
@@ -181,6 +183,15 @@ class AddTransactionViewModel @Inject constructor(
 
                     authRepository.currentUserId?.let { userId ->
                         try { syncRepository.syncWrite(localId, userId) } catch (_: Exception) {}
+                    }
+
+                    if (state.isEditing) {
+                        val ruleId = updateRuleFromOccurrence(transaction)
+                        if (ruleId != null) {
+                            authRepository.currentUserId?.let { userId ->
+                                try { syncRepository.syncWriteRecurring(ruleId, userId) } catch (_: Exception) {}
+                            }
+                        }
                     }
                 }
                 _uiState.update { it.copy(isLoading = false, isSaved = true) }

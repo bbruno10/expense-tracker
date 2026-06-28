@@ -22,6 +22,20 @@ object RecurringDateCalculator {
     }
 
     /**
+     * Returns the most recent scheduled date (<= [now]) derived from [startDate] + N*[frequency].
+     * Returns null when [startDate] is in the future (no occurrence has happened yet).
+     */
+    fun currentOccurrenceDate(startDate: Long, frequency: RecurringFrequency, now: Long): Long? {
+        if (startDate > now) return null
+        var current = startDate
+        while (true) {
+            val next = advance(current, frequency)
+            if (next > now) return current
+            current = next
+        }
+    }
+
+    /**
      * Returns the first occurrence of [startDate] + N*[frequency] that is strictly after [now].
      * If [startDate] is already in the future, returns [startDate] unchanged.
      * Opção A: always future — no catch-up on creation or update.

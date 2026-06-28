@@ -107,6 +107,9 @@ interface TransactionDao {
     @Query("UPDATE transactions SET synced = 1 WHERE id = :id")
     suspend fun markSynced(id: Long)
 
+    @Query("SELECT * FROM transactions WHERE recurringId = :recurringId ORDER BY date DESC LIMIT 1")
+    suspend fun getLatestByRecurringId(recurringId: Long): TransactionEntity?
+
     @Query("DELETE FROM transactions")
     suspend fun deleteAll()
 }

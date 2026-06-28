@@ -65,6 +65,8 @@ class FakeTransactionRepository : TransactionRepository {
 
     val inserted = mutableListOf<Transaction>()
 
+    override suspend fun getLatestByRecurringId(recurringId: Long): Transaction? = null
+
     override suspend fun insertTransaction(transaction: Transaction): Long {
         inserted.add(transaction)
         return inserted.size.toLong()
