@@ -10,6 +10,7 @@ import com.brunobrandao.expensetracker.domain.model.TransactionType
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
+import com.brunobrandao.expensetracker.domain.usecase.UpdateLatestRecurringOccurrenceUseCase
 import com.brunobrandao.expensetracker.domain.util.Clock
 import com.brunobrandao.expensetracker.domain.util.RecurringDateCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -60,7 +61,8 @@ class EditRecurringViewModel @Inject constructor(
     private val syncRepository: SyncRepository,
     private val authRepository: AuthRepository,
     private val categoryRepository: CategoryRepository,
-    private val clock: Clock
+    private val clock: Clock,
+    private val updateLatestOccurrence: UpdateLatestRecurringOccurrenceUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EditRecurringUiState())
@@ -140,26 +142,31 @@ class EditRecurringViewModel @Inject constructor(
         _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             try {
-                recurringRepository.upsert(
-                    RecurringTransaction(
-                        id = state.id,
-                        description = state.description.trim(),
-                        amount = amount,
-                        type = state.type,
-                        category = state.category,
-                        note = state.note.trim(),
-                        frequency = state.frequency,
+                val rule = RecurringTransaction(
+                    id = state.id,
+                    description = state.description.trim(),
+                    amount = amount,
+                    type = state.type,
+                    category = state.category,
+                    note = state.note.trim(),
+                    frequency = state.frequency,
+                    startDate = state.startDate,
+                    nextDueDate = RecurringDateCalculator.computeNextDueDate(
                         startDate = state.startDate,
-                        nextDueDate = RecurringDateCalculator.computeNextDueDate(
-                            startDate = state.startDate,
-                            frequency = state.frequency,
-                            now = clock.now()
-                        ),
-                        active = state.active
-                    )
+                        frequency = state.frequency,
+                        now = clock.now()
+                    ),
+                    active = state.active
                 )
+                recurringRepository.upsert(rule)
                 authRepository.currentUserId?.let { userId ->
                     try { syncRepository.syncWriteRecurring(state.id, userId) } catch (_: Exception) {}
+                }
+                val occurrenceId = updateLatestOccurrence(rule)
+                if (occurrenceId != null) {
+                    authRepository.currentUserId?.let { userId ->
+                        try { syncRepository.syncWrite(occurrenceId, userId) } catch (_: Exception) {}
+                    }
                 }
                 _uiState.update { it.copy(isLoading = false, isSaved = true) }
             } catch (e: Exception) {

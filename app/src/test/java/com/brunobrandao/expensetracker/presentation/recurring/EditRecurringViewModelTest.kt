@@ -7,6 +7,7 @@ import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.repository.RecurringTransactionRepository
+import com.brunobrandao.expensetracker.domain.usecase.UpdateLatestRecurringOccurrenceUseCase
 import com.brunobrandao.expensetracker.domain.util.Clock
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -37,6 +38,7 @@ class EditRecurringViewModelTest {
     private lateinit var syncRepository: SyncRepository
     private lateinit var authRepository: AuthRepository
     private lateinit var categoryRepository: CategoryRepository
+    private lateinit var updateLatestOccurrence: UpdateLatestRecurringOccurrenceUseCase
     private lateinit var viewModel: EditRecurringViewModel
 
     private val startDate = 1700000000000L
@@ -64,7 +66,9 @@ class EditRecurringViewModelTest {
         categoryRepository = mockk(relaxed = true)
         every { authRepository.currentUserId } returns null
         every { categoryRepository.observeCategories() } returns flowOf(emptyList())
-        viewModel = EditRecurringViewModel(recurringRepository, syncRepository, authRepository, categoryRepository, fakeClock)
+        updateLatestOccurrence = mockk(relaxed = true)
+        coEvery { updateLatestOccurrence(any()) } returns null
+        viewModel = EditRecurringViewModel(recurringRepository, syncRepository, authRepository, categoryRepository, fakeClock, updateLatestOccurrence)
     }
 
     @After

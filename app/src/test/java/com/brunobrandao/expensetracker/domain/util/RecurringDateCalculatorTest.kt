@@ -2,6 +2,7 @@ package com.brunobrandao.expensetracker.domain.util
 
 import com.brunobrandao.expensetracker.domain.model.RecurringFrequency
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
@@ -84,6 +85,58 @@ class RecurringDateCalculatorTest {
         val result = RecurringDateCalculator.computeNextDueDate(startDate, RecurringFrequency.YEARLY, now)
         assertTrue(result > now)
         assertEquals(utcMillis(2025, 3, 10), result)
+    }
+
+    // ─── currentOccurrenceDate ────────────────────────────────────────────────
+
+    @Test
+    fun `currentOccurrenceDate returns null when startDate is in the future`() {
+        val now = utcMillis(2024, 6, 1)
+        val startDate = utcMillis(2024, 6, 15)
+        assertNull(RecurringDateCalculator.currentOccurrenceDate(startDate, RecurringFrequency.MONTHLY, now))
+    }
+
+    @Test
+    fun `currentOccurrenceDate returns startDate when startDate equals now`() {
+        val now = utcMillis(2024, 6, 1)
+        val result = RecurringDateCalculator.currentOccurrenceDate(now, RecurringFrequency.MONTHLY, now)
+        assertEquals(now, result)
+    }
+
+    @Test
+    fun `currentOccurrenceDate MONTHLY returns most recent period not exceeding now`() {
+        val startDate = utcMillis(2024, 1, 15)
+        val now = utcMillis(2024, 4, 5)
+        // Jan-15, Feb-15, Mar-15 are <= Apr-05; Apr-15 is not
+        val result = RecurringDateCalculator.currentOccurrenceDate(startDate, RecurringFrequency.MONTHLY, now)
+        assertEquals(utcMillis(2024, 3, 15), result)
+    }
+
+    @Test
+    fun `currentOccurrenceDate WEEKLY returns most recent period not exceeding now`() {
+        val startDate = utcMillis(2024, 1, 1)
+        val now = utcMillis(2024, 1, 22)
+        // Jan-01, Jan-08, Jan-15, Jan-22 are <= Jan-22; Jan-29 is not
+        val result = RecurringDateCalculator.currentOccurrenceDate(startDate, RecurringFrequency.WEEKLY, now)
+        assertEquals(utcMillis(2024, 1, 22), result)
+    }
+
+    @Test
+    fun `currentOccurrenceDate YEARLY returns most recent period not exceeding now`() {
+        val startDate = utcMillis(2021, 3, 10)
+        val now = utcMillis(2024, 6, 1)
+        // 2021-03-10, 2022-03-10, 2023-03-10, 2024-03-10 are <= Jun-01-2024; 2025-03-10 is not
+        val result = RecurringDateCalculator.currentOccurrenceDate(startDate, RecurringFrequency.YEARLY, now)
+        assertEquals(utcMillis(2024, 3, 10), result)
+    }
+
+    @Test
+    fun `currentOccurrenceDate returns startDate when now is before first advance`() {
+        val startDate = utcMillis(2024, 6, 1)
+        val now = utcMillis(2024, 6, 10)
+        // Only one period: Jun-01 <= Jun-10; Jul-01 > Jun-10
+        val result = RecurringDateCalculator.currentOccurrenceDate(startDate, RecurringFrequency.MONTHLY, now)
+        assertEquals(startDate, result)
     }
 
     @Test

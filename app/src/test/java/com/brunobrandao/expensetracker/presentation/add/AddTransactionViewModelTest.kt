@@ -13,6 +13,7 @@ import com.brunobrandao.expensetracker.domain.repository.TransactionRepository
 import com.brunobrandao.expensetracker.domain.usecase.AddTransactionUseCase
 import com.brunobrandao.expensetracker.domain.usecase.CreateCategoryUseCase
 import com.brunobrandao.expensetracker.domain.usecase.GenerateDueRecurringTransactionsUseCase
+import com.brunobrandao.expensetracker.domain.usecase.UpdateRuleFromOccurrenceUseCase
 import com.brunobrandao.expensetracker.domain.util.Clock
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -53,6 +54,7 @@ class AddTransactionViewModelTest {
     private lateinit var syncRepository: SyncRepository
     private lateinit var recurringRepository: RecurringTransactionRepository
     private lateinit var generateDue: GenerateDueRecurringTransactionsUseCase
+    private lateinit var updateRuleFromOccurrence: UpdateRuleFromOccurrenceUseCase
     private lateinit var dao: CategoryDao
     private lateinit var viewModel: AddTransactionViewModel
 
@@ -65,6 +67,8 @@ class AddTransactionViewModelTest {
         syncRepository = mockk(relaxed = true)
         recurringRepository = mockk(relaxed = true)
         generateDue = mockk(relaxed = true)
+        updateRuleFromOccurrence = mockk(relaxed = true)
+        coEvery { updateRuleFromOccurrence(any()) } returns null
         dao = mockk(relaxed = true)
         coEvery { dao.getByKey(any()) } returns null
         every { dao.observeAll() } returns flowOf(emptyList())
@@ -72,7 +76,8 @@ class AddTransactionViewModelTest {
         val createCategory = CreateCategoryUseCase(categoryRepo)
         viewModel = AddTransactionViewModel(
             addTransactionUseCase, repository, authRepository, syncRepository,
-            recurringRepository, generateDue, categoryRepo, createCategory, fakeClock
+            recurringRepository, generateDue, categoryRepo, createCategory, fakeClock,
+            updateRuleFromOccurrence
         )
     }
 

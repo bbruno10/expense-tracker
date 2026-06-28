@@ -76,6 +76,10 @@ class TransactionRepositoryImpl @Inject constructor(
         return dao.getBalanceByDateRange(startDate, endDate)
     }
 
+    override suspend fun getLatestByRecurringId(recurringId: Long): Transaction? {
+        return dao.getLatestByRecurringId(recurringId)?.toDomain()
+    }
+
     override suspend fun insertTransaction(transaction: Transaction): Long {
         return dao.insert(transaction.toEntity())
     }
