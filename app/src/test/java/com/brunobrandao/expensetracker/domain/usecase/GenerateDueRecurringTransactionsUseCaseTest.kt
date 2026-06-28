@@ -279,6 +279,40 @@ class GenerateDueRecurringTransactionsUseCaseTest {
         }
     }
 
+    // ── 7. Re-ancoragem de regra com nextDueDate driftado ────────────────────
+
+    @Test
+    fun `monthly rule with drifted nextDueDate re-anchors Mar-31 from startDate not Mar-28`() = runTest {
+        val jan31_2025 = LocalDate.of(2025, 1, 31).toUtcMillis()
+        val feb28_2025 = LocalDate.of(2025, 2, 28).toUtcMillis()
+        val mar31_2025 = LocalDate.of(2025, 3, 31).toUtcMillis()
+        val apr30_2025 = LocalDate.of(2025, 4, 30).toUtcMillis()
+
+        // Estado driftado de um build antigo: startDate=Jan-31, nextDueDate=Feb-28 (errado)
+        recurringRepo.rules.add(
+            RecurringTransaction(
+                id = 1L,
+                description = "Aluguel",
+                amount = 1500.0,
+                type = TransactionType.EXPENSE,
+                category = "HOUSING",
+                note = "",
+                frequency = RecurringFrequency.MONTHLY,
+                startDate = jan31_2025,
+                nextDueDate = feb28_2025,
+                active = true
+            )
+        )
+
+        // now = Apr-30 - 1ms: Feb-28 e Mar-31 vencem; Apr-30 (meia-noite) ainda não
+        useCase(apr30_2025 - 1)
+
+        assertEquals(2, txRepo.inserted.size)
+        assertEquals(feb28_2025, txRepo.inserted[0].date)
+        assertEquals(mar31_2025, txRepo.inserted[1].date)  // re-ancorado! não Mar-28
+        assertEquals(apr30_2025, recurringRepo.rules[0].nextDueDate)
+    }
+
     // ── Extra: múltiplas regras independentes ─────────────────────────────────
 
     @Test

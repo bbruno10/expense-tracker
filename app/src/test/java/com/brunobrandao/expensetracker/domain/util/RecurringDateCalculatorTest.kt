@@ -149,4 +149,55 @@ class RecurringDateCalculatorTest {
             assertTrue("Expected result > now for $freq", result > now)
         }
     }
+
+    // ─── occurrenceAt ─────────────────────────────────────────────────────────
+
+    @Test
+    fun `occurrenceAt MONTHLY anchored on Jan-31 2025 re-anchors after February clamp`() {
+        val start = utcMillis(2025, 1, 31)
+        assertEquals(utcMillis(2025, 1, 31), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.MONTHLY, 0))
+        assertEquals(utcMillis(2025, 2, 28), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.MONTHLY, 1))
+        assertEquals(utcMillis(2025, 3, 31), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.MONTHLY, 2))
+        assertEquals(utcMillis(2025, 4, 30), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.MONTHLY, 3))
+        assertEquals(utcMillis(2025, 5, 31), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.MONTHLY, 4))
+        assertEquals(utcMillis(2025, 6, 30), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.MONTHLY, 5))
+        assertEquals(utcMillis(2025, 7, 31), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.MONTHLY, 6))
+    }
+
+    @Test
+    fun `occurrenceAt MONTHLY anchored on day-30 clamps in February then re-anchors`() {
+        val start = utcMillis(2025, 1, 30)
+        assertEquals(utcMillis(2025, 1, 30), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.MONTHLY, 0))
+        assertEquals(utcMillis(2025, 2, 28), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.MONTHLY, 1))
+        assertEquals(utcMillis(2025, 3, 30), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.MONTHLY, 2))
+        assertEquals(utcMillis(2025, 4, 30), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.MONTHLY, 3))
+    }
+
+    @Test
+    fun `occurrenceAt YEARLY anchored on Feb-29 leap year clamps non-leap and re-expands`() {
+        val start = utcMillis(2024, 2, 29)
+        assertEquals(utcMillis(2024, 2, 29), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.YEARLY, 0))
+        assertEquals(utcMillis(2025, 2, 28), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.YEARLY, 1))
+        assertEquals(utcMillis(2026, 2, 28), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.YEARLY, 2))
+        assertEquals(utcMillis(2027, 2, 28), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.YEARLY, 3))
+        assertEquals(utcMillis(2028, 2, 29), RecurringDateCalculator.occurrenceAt(start, RecurringFrequency.YEARLY, 4))
+    }
+
+    @Test
+    fun `computeNextDueDate with day-31 anchor does not get stuck at day 28`() {
+        val start = utcMillis(2025, 1, 31)
+        val now = utcMillis(2025, 3, 15)
+        // Jan-31(i=0) and Feb-28(i=1) are <= Mar-15; Mar-31(i=2) > Mar-15
+        val result = RecurringDateCalculator.computeNextDueDate(start, RecurringFrequency.MONTHLY, now)
+        assertEquals(utcMillis(2025, 3, 31), result)
+    }
+
+    @Test
+    fun `currentOccurrenceDate with day-31 anchor does not drift to day 28`() {
+        val start = utcMillis(2025, 1, 31)
+        val now = utcMillis(2025, 4, 5)
+        // Jan-31(i=0), Feb-28(i=1), Mar-31(i=2) <= Apr-5; Apr-30(i=3) > Apr-5
+        val result = RecurringDateCalculator.currentOccurrenceDate(start, RecurringFrequency.MONTHLY, now)
+        assertEquals(utcMillis(2025, 3, 31), result)
+    }
 }
