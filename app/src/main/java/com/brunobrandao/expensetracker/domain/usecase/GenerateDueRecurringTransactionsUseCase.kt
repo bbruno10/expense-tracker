@@ -13,7 +13,10 @@ class GenerateDueRecurringTransactionsUseCase @Inject constructor(
     suspend operator fun invoke(now: Long) {
         val dueRules = recurringRepository.getActiveDue(now)
         for (rule in dueRules) {
-            var nextDue = rule.nextDueDate
+            val start = rule.startDate
+            var index = 0
+            while (RecurringDateCalculator.occurrenceAt(start, rule.frequency, index) < rule.nextDueDate) index++
+            var nextDue = RecurringDateCalculator.occurrenceAt(start, rule.frequency, index)
             while (nextDue <= now) {
                 transactionRepository.insertTransaction(
                     Transaction(
@@ -26,7 +29,8 @@ class GenerateDueRecurringTransactionsUseCase @Inject constructor(
                         recurringId = rule.id
                     )
                 )
-                nextDue = RecurringDateCalculator.advance(nextDue, rule.frequency)
+                index++
+                nextDue = RecurringDateCalculator.occurrenceAt(start, rule.frequency, index)
             }
             recurringRepository.upsert(rule.copy(nextDueDate = nextDue))
         }

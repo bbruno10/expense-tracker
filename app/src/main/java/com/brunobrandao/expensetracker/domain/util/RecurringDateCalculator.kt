@@ -6,9 +6,20 @@ import java.time.ZoneOffset
 
 object RecurringDateCalculator {
 
-    // TODO: MONTHLY edge cases — LocalDate.plusMonths() clamps to last valid day (Jan-31 → Feb-28/29),
-    //       causing day drift (Feb-28 → Mar-28 → ...). Fix in a separate PR.
+    fun occurrenceAt(startDate: Long, frequency: RecurringFrequency, index: Int): Long {
+        val date = Instant.ofEpochMilli(startDate)
+            .atZone(ZoneOffset.UTC)
+            .toLocalDate()
+        val result = when (frequency) {
+            RecurringFrequency.WEEKLY  -> date.plusWeeks(index.toLong())
+            RecurringFrequency.MONTHLY -> date.plusMonths(index.toLong())
+            RecurringFrequency.YEARLY  -> date.plusYears(index.toLong())
+        }
+        return result.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+    }
 
+    // Single-step helper. Do NOT call iteratively — accumulated month-end clamp
+    // causes day drift (Jan-31 → Feb-28 → Mar-28 → …). Use occurrenceAt() instead.
     fun advance(epochMillis: Long, frequency: RecurringFrequency): Long {
         val date = Instant.ofEpochMilli(epochMillis)
             .atZone(ZoneOffset.UTC)
@@ -27,12 +38,9 @@ object RecurringDateCalculator {
      */
     fun currentOccurrenceDate(startDate: Long, frequency: RecurringFrequency, now: Long): Long? {
         if (startDate > now) return null
-        var current = startDate
-        while (true) {
-            val next = advance(current, frequency)
-            if (next > now) return current
-            current = next
-        }
+        var i = 0
+        while (occurrenceAt(startDate, frequency, i + 1) <= now) i++
+        return occurrenceAt(startDate, frequency, i)
     }
 
     /**
@@ -41,10 +49,8 @@ object RecurringDateCalculator {
      * Opção A: always future — no catch-up on creation or update.
      */
     fun computeNextDueDate(startDate: Long, frequency: RecurringFrequency, now: Long): Long {
-        var next = startDate
-        while (next <= now) {
-            next = advance(next, frequency)
-        }
-        return next
+        var i = 0
+        while (occurrenceAt(startDate, frequency, i) <= now) i++
+        return occurrenceAt(startDate, frequency, i)
     }
 }
