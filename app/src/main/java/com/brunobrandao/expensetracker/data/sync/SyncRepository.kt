@@ -249,6 +249,22 @@ class SyncRepository @Inject constructor(
         }
     }
 
+    /**
+     * Write-through delete for categories: local guaranteed, Firestore best-effort.
+     */
+    suspend fun syncDeleteCategory(key: String, userId: String) {
+        val entity = categoryDao.getByKey(key) ?: return
+        categoryDao.deleteByKey(key)
+        val remoteId = entity.remoteId
+        if (!remoteId.isNullOrEmpty()) {
+            try {
+                firestore.collection("users").document(userId)
+                    .collection("categories").document(remoteId)
+                    .delete().await()
+            } catch (_: Exception) {}
+        }
+    }
+
     // --- Category sync ---
 
     internal suspend fun pushUnsyncedCategories(userId: String) {

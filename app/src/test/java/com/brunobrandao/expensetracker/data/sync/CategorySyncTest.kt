@@ -36,11 +36,12 @@ class CategorySyncTest {
     private val authRepository = mockk<AuthRepository>(relaxed = true)
     private val firestore = mockk<FirebaseFirestore>(relaxed = true)
 
+    private lateinit var mockDocRef: DocumentReference
     private lateinit var sut: SyncRepository
 
     @Before
     fun setup() {
-        // Wire Firestore chain for categories; set() returns a completed Task<Void>.
+        // Wire Firestore chain for categories; set() and delete() return a completed Task<Void>.
         val completedTask = mockk<Task<Void>> {
             every { isComplete } returns true
             every { isSuccessful } returns true
@@ -48,8 +49,9 @@ class CategorySyncTest {
             every { result } returns null
             every { exception } returns null
         }
-        val mockDocRef = mockk<DocumentReference>(relaxed = true) {
+        mockDocRef = mockk<DocumentReference>(relaxed = true) {
             every { set(any<Map<String, Any>>()) } returns completedTask
+            every { delete() } returns completedTask
         }
         val mockCategoryCol = mockk<CollectionReference>(relaxed = true) {
             every { document(any()) } returns mockDocRef
@@ -184,6 +186,40 @@ class CategorySyncTest {
 
         coVerify(exactly = 0) { categoryDao.upsert(any()) }
         coVerify(exactly = 0) { categoryDao.deleteByKey(any()) }
+    }
+
+    // ── syncDeleteCategory ────────────────────────────────────────────────────
+
+    @Test
+    fun `syncDeleteCategory with remoteId deletes local and removes Firestore doc`() = runTest {
+        val entity = entity(key = "cat-key", remoteId = "remote-abc", synced = true)
+        coEvery { categoryDao.getByKey("cat-key") } returns entity
+
+        sut.syncDeleteCategory("cat-key", "user123")
+
+        coVerify(exactly = 1) { categoryDao.deleteByKey("cat-key") }
+        coVerify(exactly = 1) { mockDocRef.delete() }
+    }
+
+    @Test
+    fun `syncDeleteCategory with null remoteId deletes local only`() = runTest {
+        val entity = entity(key = "cat-key", remoteId = null, synced = false)
+        coEvery { categoryDao.getByKey("cat-key") } returns entity
+
+        sut.syncDeleteCategory("cat-key", "user123")
+
+        coVerify(exactly = 1) { categoryDao.deleteByKey("cat-key") }
+        coVerify(exactly = 0) { mockDocRef.delete() }
+    }
+
+    @Test
+    fun `syncDeleteCategory with unknown key does nothing`() = runTest {
+        coEvery { categoryDao.getByKey("missing") } returns null
+
+        sut.syncDeleteCategory("missing", "user123")
+
+        coVerify(exactly = 0) { categoryDao.deleteByKey(any()) }
+        coVerify(exactly = 0) { mockDocRef.delete() }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

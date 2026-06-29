@@ -242,9 +242,10 @@ class CategoryUseCasesTest {
         coEvery { dao.getByKey("custom-key") } returns custom
         coEvery { dao.countTransactionsUsing("custom-key") } returns 0
 
+        // Use case is validation only; removal is the caller's responsibility.
         deleteCategory("custom-key")
 
-        coVerify(exactly = 1) { dao.deleteByKey("custom-key") }
+        coVerify(exactly = 0) { dao.deleteByKey(any()) }
     }
 
     @Test
