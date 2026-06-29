@@ -65,6 +65,13 @@
     <string name="settings_about_tech_value">Kotlin, Jetpack Compose, Hilt, Room</string>
     <string name="settings_close">Close</string>
 
+    <!-- Auth — password reset -->
+    <string name="auth_forgot_password">Forgot password?</string>
+    <string name="auth_reset_title">Reset password</string>
+    <string name="auth_reset_send">Send reset link</string>
+    <string name="auth_reset_cancel">Cancel</string>
+    <string name="auth_reset_sent">If an account exists for this email, a reset link has been sent.</string>
+
     <!-- Accessibility content descriptions -->
     <string name="cd_balance_trend">Balance trend</string>
 </resources>

@@ -131,4 +131,33 @@ class AuthRepositoryImplTest {
 
         assertTrue(result.isFailure)
     }
+
+    // ── sendPasswordReset ─────────────────────────────────────────────────────
+
+    @Test
+    fun `sendPasswordReset calls sendPasswordResetEmail and returns success`() = runTest {
+        val task = mockk<Task<Void>> {
+            every { isComplete } returns true
+            every { isSuccessful } returns true
+            every { isCanceled } returns false
+            every { result } returns null
+            every { exception } returns null
+        }
+        every { auth.sendPasswordResetEmail(any()) } returns task
+
+        val result = repository.sendPasswordReset("user@example.com")
+
+        assertTrue(result.isSuccess)
+        coVerify { auth.sendPasswordResetEmail("user@example.com") }
+    }
+
+    @Test
+    fun `sendPasswordReset returns failure when Firebase throws`() = runTest {
+        every { auth.sendPasswordResetEmail(any()) } throws Exception("Network error")
+
+        val result = repository.sendPasswordReset("user@example.com")
+
+        assertTrue(result.isFailure)
+        assertNotNull(result.exceptionOrNull())
+    }
 }
