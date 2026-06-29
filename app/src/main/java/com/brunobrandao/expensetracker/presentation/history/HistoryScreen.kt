@@ -15,12 +15,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -77,6 +87,8 @@ fun HistoryScreen(
     var pendingDeleteTransaction by remember { mutableStateOf<Transaction?>(null) }
     var pendingSwipeDeleteTransaction by remember { mutableStateOf<Transaction?>(null) }
     val financeColors = LocalFinanceColors.current
+    var isSearchOpen by remember { mutableStateOf(false) }
+    var isScopeFilterOpen by remember { mutableStateOf(false) }
 
     // Detail Dialog
     detailTransaction?.let { transaction ->
@@ -193,13 +205,91 @@ fun HistoryScreen(
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Title
-        Text(
-            text = stringResource(R.string.history_title),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-        )
+        // Title row with search toggle
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.history_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (isSearchOpen) {
+                    IconButton(onClick = { isScopeFilterOpen = !isScopeFilterOpen }) {
+                        Icon(Icons.Default.FilterList, contentDescription = null)
+                    }
+                }
+                IconButton(
+                    onClick = {
+                        if (isSearchOpen) {
+                            isSearchOpen = false
+                            isScopeFilterOpen = false
+                            viewModel.onEvent(HistoryEvent.ClearSearch)
+                        } else {
+                            isSearchOpen = true
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = if (isSearchOpen) Icons.Default.Close else Icons.Default.Search,
+                        contentDescription = null
+                    )
+                }
+            }
+        }
+
+        // Search field (visible only when search is open)
+        if (isSearchOpen) {
+            OutlinedTextField(
+                value = state.searchQuery,
+                onValueChange = { viewModel.onEvent(HistoryEvent.SearchQueryChanged(it)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                placeholder = { Text(stringResource(R.string.history_search_hint), style = MaterialTheme.typography.bodyMedium) },
+                trailingIcon = {
+                    if (state.searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.onEvent(HistoryEvent.ClearSearch) }) {
+                            Icon(Icons.Default.Clear, contentDescription = null)
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
+            )
+        }
+
+        // Scope chips (visible only when search AND scope filter are open)
+        if (isSearchOpen && isScopeFilterOpen) {
+            val scopeOptions = listOf(
+                SearchScope.BOTH  to stringResource(R.string.history_scope_both),
+                SearchScope.TITLE to stringResource(R.string.history_scope_title),
+                SearchScope.NOTE  to stringResource(R.string.history_scope_note)
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                scopeOptions.forEach { (scope, label) ->
+                    FilterChip(
+                        selected = state.searchScope == scope,
+                        onClick = { viewModel.onEvent(HistoryEvent.SearchScopeChanged(scope)) },
+                        label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = Color.White
+                        )
+                    )
+                }
+            }
+        }
 
         // Category filter chips
         LazyRow(
@@ -252,7 +342,61 @@ fun HistoryScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Filter total bar
+        val filterTotals = remember(state.transactions) {
+            val income = state.transactions.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
+            val expense = state.transactions.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+            Pair(income, expense)
+        }
+        val isFilterActive = state.searchQuery.isNotBlank() ||
+            state.filterType != null ||
+            state.filterCategory != null
+        if (isFilterActive) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.history_filter_total),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (filterTotals.first > 0) {
+                        Text(
+                            text = "+ ${CurrencyFormatter.format(filterTotals.first, state.currency)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = financeColors.income
+                        )
+                    }
+                    if (filterTotals.second > 0) {
+                        Text(
+                            text = "- ${CurrencyFormatter.format(filterTotals.second, state.currency)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = financeColors.expense
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
 
         if (state.isLoading) {
             Box(
@@ -360,7 +504,8 @@ fun HistoryScreen(
                                 categoriesMap = categoriesMap,
                                 onClick = { detailTransaction = transaction },
                                 onLongClick = { selectedTransaction = transaction },
-                                currency = state.currency
+                                currency = state.currency,
+                                showNotePreview = state.searchQuery.isNotBlank()
                             )
                         }
                     }
