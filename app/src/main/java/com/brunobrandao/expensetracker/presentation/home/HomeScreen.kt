@@ -517,7 +517,8 @@ fun TransactionItem(
     categoriesMap: Map<String, Category> = emptyMap(),
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
-    currency: Currency = Currency.USD
+    currency: Currency = Currency.USD,
+    showNotePreview: Boolean = false
 ) {
     val category = categoriesMap[transaction.category] ?: DefaultCategories.fallback(transaction.category)
     val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy") }
@@ -590,6 +591,15 @@ fun TransactionItem(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (showNotePreview && transaction.note.isNotBlank()) {
+                        Text(
+                            text = transaction.note,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
             Text(

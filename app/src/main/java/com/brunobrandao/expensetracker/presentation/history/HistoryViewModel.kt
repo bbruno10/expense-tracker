@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.brunobrandao.expensetracker.data.preferences.UserPreferencesRepository
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
+import com.brunobrandao.expensetracker.domain.model.Transaction
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.usecase.DeleteTransactionUseCase
@@ -31,8 +32,13 @@ class HistoryViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
 
+    private var allTransactions: List<Transaction> = emptyList()
+
     init {
-        observeTransactions()
+        getTransactions().onEach { list ->
+            allTransactions = list
+            applyFilters()
+        }.launchIn(viewModelScope)
         categoryRepository.observeCategories().onEach { cats ->
             _uiState.update { it.copy(categories = cats) }
         }.launchIn(viewModelScope)
@@ -41,29 +47,37 @@ class HistoryViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun observeTransactions() {
-        getTransactions().onEach { allTransactions ->
-            val state = _uiState.value
-            val filtered = allTransactions
-                .filter { transaction ->
-                    (state.filterType == null || transaction.type == state.filterType) &&
-                    (state.filterCategory == null || transaction.category == state.filterCategory)
-                }
-            _uiState.update {
-                it.copy(transactions = filtered, isLoading = false)
-            }
-        }.launchIn(viewModelScope)
+    private fun applyFilters() {
+        val state = _uiState.value
+        val filtered = allTransactions.filter { transaction ->
+            (state.filterType == null || transaction.type == state.filterType) &&
+            (state.filterCategory == null || transaction.category == state.filterCategory) &&
+            TransactionSearchMatcher.matches(transaction, state.searchQuery, state.searchScope)
+        }
+        _uiState.update { it.copy(transactions = filtered, isLoading = false) }
     }
 
     fun onEvent(event: HistoryEvent) {
         when (event) {
             is HistoryEvent.FilterByType -> {
                 _uiState.update { it.copy(filterType = event.type) }
-                observeTransactions()
+                applyFilters()
             }
             is HistoryEvent.FilterByCategory -> {
                 _uiState.update { it.copy(filterCategory = event.category) }
-                observeTransactions()
+                applyFilters()
+            }
+            is HistoryEvent.SearchQueryChanged -> {
+                _uiState.update { it.copy(searchQuery = event.query) }
+                applyFilters()
+            }
+            is HistoryEvent.SearchScopeChanged -> {
+                _uiState.update { it.copy(searchScope = event.scope) }
+                applyFilters()
+            }
+            is HistoryEvent.ClearSearch -> {
+                _uiState.update { it.copy(searchQuery = "") }
+                applyFilters()
             }
             is HistoryEvent.DeleteTransaction -> {
                 viewModelScope.launch {
