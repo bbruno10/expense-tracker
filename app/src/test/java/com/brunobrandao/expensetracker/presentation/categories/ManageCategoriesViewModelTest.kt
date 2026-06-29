@@ -4,7 +4,9 @@ import androidx.compose.ui.graphics.Color
 import com.brunobrandao.expensetracker.data.local.dao.CategoryDao
 import com.brunobrandao.expensetracker.data.local.entity.CategoryEntity
 import com.brunobrandao.expensetracker.data.repository.CategoryRepositoryImpl
+import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.model.Category
+import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.usecase.ArchiveCategoryUseCase
 import com.brunobrandao.expensetracker.domain.usecase.CreateCategoryUseCase
 import com.brunobrandao.expensetracker.domain.usecase.DeleteCategoryUseCase
@@ -48,6 +50,8 @@ class ManageCategoriesViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var dao: CategoryDao
+    private val authRepository = mockk<AuthRepository>(relaxed = true)
+    private val syncRepository = mockk<SyncRepository>(relaxed = true)
     private lateinit var viewModel: ManageCategoriesViewModel
 
     // ── Entity fixtures (DAO layer — no Color value class) ────────────────────
@@ -74,7 +78,9 @@ class ManageCategoriesViewModelTest {
             updateCategory    = UpdateCategoryUseCase(repo),
             archiveCategory   = ArchiveCategoryUseCase(repo),
             unarchiveCategory = UnarchiveCategoryUseCase(repo),
-            deleteCategory    = DeleteCategoryUseCase(repo)
+            deleteCategory    = DeleteCategoryUseCase(repo),
+            authRepository    = authRepository,
+            syncRepository    = syncRepository
         )
     }
 
@@ -269,9 +275,10 @@ class ManageCategoriesViewModelTest {
     }
 
     @Test
-    fun `ConfirmDelete custom with 0 usage calls dao deleteByKey`() = runTest {
+    fun `ConfirmDelete custom with 0 usage — offline path calls dao deleteByKey`() = runTest {
         coEvery { dao.getByKey("custom-1") } returns entityCustomActive
         coEvery { dao.countTransactionsUsing("custom-1") } returns 0
+        every { authRepository.currentUserId } returns null   // simulate offline / logged-out
 
         advanceUntilIdle()
         viewModel.onEvent(ManageCategoriesEvent.ShowDeleteConfirm("custom-1"))
@@ -279,6 +286,22 @@ class ManageCategoriesViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { dao.deleteByKey("custom-1") }
+        assertNull(viewModel.uiState.value.pendingDeleteKey)
+    }
+
+    @Test
+    fun `ConfirmDelete custom with 0 usage — online path calls syncDeleteCategory`() = runTest {
+        coEvery { dao.getByKey("custom-1") } returns entityCustomActive
+        coEvery { dao.countTransactionsUsing("custom-1") } returns 0
+        every { authRepository.currentUserId } returns "user-abc"
+
+        advanceUntilIdle()
+        viewModel.onEvent(ManageCategoriesEvent.ShowDeleteConfirm("custom-1"))
+        viewModel.onEvent(ManageCategoriesEvent.ConfirmDelete)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { syncRepository.syncDeleteCategory("custom-1", "user-abc") }
+        coVerify(exactly = 0) { dao.deleteByKey(any()) }
         assertNull(viewModel.uiState.value.pendingDeleteKey)
     }
 

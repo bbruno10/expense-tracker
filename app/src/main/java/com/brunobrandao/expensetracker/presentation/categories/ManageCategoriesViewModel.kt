@@ -2,6 +2,8 @@ package com.brunobrandao.expensetracker.presentation.categories
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.brunobrandao.expensetracker.data.sync.SyncRepository
+import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.brunobrandao.expensetracker.domain.repository.CategoryRepository
 import com.brunobrandao.expensetracker.domain.usecase.ArchiveCategoryUseCase
 import com.brunobrandao.expensetracker.domain.usecase.CreateCategoryUseCase
@@ -25,7 +27,9 @@ class ManageCategoriesViewModel @Inject constructor(
     private val updateCategory: UpdateCategoryUseCase,
     private val archiveCategory: ArchiveCategoryUseCase,
     private val unarchiveCategory: UnarchiveCategoryUseCase,
-    private val deleteCategory: DeleteCategoryUseCase
+    private val deleteCategory: DeleteCategoryUseCase,
+    private val authRepository: AuthRepository,
+    private val syncRepository: SyncRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ManageCategoriesUiState())
@@ -98,8 +102,15 @@ class ManageCategoriesViewModel @Inject constructor(
                 val key = _uiState.value.pendingDeleteKey ?: return
                 _uiState.update { it.copy(pendingDeleteKey = null) }
                 viewModelScope.launch {
-                    runCatching { deleteCategory(key) }
-                        .onFailure { e -> _uiState.update { it.copy(snackbarMessage = e.message) } }
+                    runCatching {
+                        deleteCategory(key)
+                        val userId = authRepository.currentUserId
+                        if (userId != null) {
+                            syncRepository.syncDeleteCategory(key, userId)
+                        } else {
+                            categoryRepository.delete(key)
+                        }
+                    }.onFailure { e -> _uiState.update { it.copy(snackbarMessage = e.message) } }
                 }
             }
 
