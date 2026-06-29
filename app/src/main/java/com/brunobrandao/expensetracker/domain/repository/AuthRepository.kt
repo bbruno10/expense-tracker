@@ -13,4 +13,6 @@ interface AuthRepository {
     suspend fun reauthenticate(password: String): Result<Unit>
     /** Deletes the Firebase Auth account. Caller must call reauthenticate() first. */
     suspend fun deleteAccount(): Result<Unit>
+    /** Sends a password-reset email. Returns success regardless of whether the email exists (account enumeration prevention is done in the caller). */
+    suspend fun sendPasswordReset(email: String): Result<Unit>
 }

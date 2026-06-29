@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -38,11 +39,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.brunobrandao.expensetracker.R
 
 @Composable
 fun LoginScreen(
@@ -52,6 +55,40 @@ fun LoginScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var passwordVisible by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text(stringResource(R.string.auth_reset_title), fontWeight = FontWeight.Bold) },
+            text = {
+                OutlinedTextField(
+                    value = state.email,
+                    onValueChange = viewModel::onEmailChange,
+                    label = { Text("Email") },
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.sendPasswordReset()
+                        showResetDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.auth_reset_send), fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) {
+                    Text(stringResource(R.string.auth_reset_cancel))
+                }
+            }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -133,6 +170,18 @@ fun LoginScreen(
             )
         }
 
+        if (state.infoMessage != null) {
+            Text(
+                text = state.infoMessage!!,
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+            )
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
@@ -154,7 +203,14 @@ fun LoginScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        TextButton(onClick = { showResetDialog = true }) {
+            Text(
+                text = stringResource(R.string.auth_forgot_password),
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(onClick = onNavigateToSignup) {
             Text(

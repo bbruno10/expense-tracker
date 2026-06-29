@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.brunobrandao.expensetracker.data.sync.SyncRepository
 import com.brunobrandao.expensetracker.domain.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,15 +30,15 @@ class AuthViewModel @Inject constructor(
         get() = authRepository.currentUserId != null
 
     fun onEmailChange(value: String) {
-        _uiState.update { it.copy(email = value, errorMessage = null) }
+        _uiState.update { it.copy(email = value, errorMessage = null, infoMessage = null) }
     }
 
     fun onPasswordChange(value: String) {
-        _uiState.update { it.copy(password = value, errorMessage = null) }
+        _uiState.update { it.copy(password = value, errorMessage = null, infoMessage = null) }
     }
 
     fun onConfirmPasswordChange(value: String) {
-        _uiState.update { it.copy(confirmPassword = value, errorMessage = null) }
+        _uiState.update { it.copy(confirmPassword = value, errorMessage = null, infoMessage = null) }
     }
 
     fun signIn(onSuccess: () -> Unit) {
@@ -99,6 +100,32 @@ class AuthViewModel @Inject constructor(
             syncRepository.signOutAndCleanup(userId)
         } else {
             authRepository.signOut()
+        }
+    }
+
+    fun sendPasswordReset() {
+        val email = _uiState.value.email.trim()
+        val emailValid = Patterns.EMAIL_ADDRESS?.matcher(email)?.matches()
+            ?: Regex("^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$").matches(email)
+        if (!emailValid) {
+            _uiState.update { it.copy(errorMessage = "Invalid email address", infoMessage = null) }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, infoMessage = null) }
+            authRepository.sendPasswordReset(email)
+                .onSuccess {
+                    _uiState.update { it.copy(isLoading = false,
+                        infoMessage = "If an account exists for this email, a reset link has been sent.") }
+                }
+                .onFailure { error ->
+                    if (error is FirebaseAuthInvalidUserException) {
+                        _uiState.update { it.copy(isLoading = false,
+                            infoMessage = "If an account exists for this email, a reset link has been sent.") }
+                    } else {
+                        _uiState.update { it.copy(isLoading = false, errorMessage = friendlyError(error)) }
+                    }
+                }
         }
     }
 
